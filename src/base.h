@@ -1,3 +1,7 @@
+/**
+ * Base structures for compiler & interpreter.
+ */
+
 #pragma once
 
 #include <iostream>
