@@ -1,12 +1,7 @@
-/**
- * Base structures for compiler & interpreter.
- */
-
 #pragma once
 
 #include <iostream>
 #include <vector>
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Lexical analysis structures
@@ -49,6 +44,7 @@ struct Expression {
 };
 
 struct Operator {
+    virtual ~Operator() {}
 };
 
 struct IfOperator : public Operator {
@@ -67,7 +63,7 @@ struct VarDefOperator : public Operator {
 };
 
 struct AssignOperator : public Operator {
-    std::string name;
+    std::string variableName;
     Expression* value;
 };
 
@@ -98,6 +94,8 @@ enum BCCommandType {
     CALL
 };
 
+
+
 struct BCCommand {
     BCCommandType type;
 
@@ -117,3 +115,18 @@ struct BCFunction {
 struct Bytecode {
     std::vector<BCFunction*> functions;
 };
+
+// Bytecode Generating
+
+Bytecode* generateBytecode(IR* ir);
+
+// Bytecode print
+
+void writeBytecode(Bytecode* bc, std::string filename);
+
+void writeBytecode(Bytecode* bc, std::ostream& os);
+
+// Bytecode tests
+
+void TestExpressionAssign();
+
