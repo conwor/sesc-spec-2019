@@ -1,12 +1,7 @@
-/**
- * Base structures for compiler & interpreter.
- */
-
 #pragma once
 
 #include <iostream>
 #include <vector>
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Lexical analysis structures
@@ -40,68 +35,169 @@ struct Token {
     friend std::ostream& operator <<(std::ostream& out, const Token &tk);
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // IR
 
 struct Expression {
+    Expression(){};
+
+    Expression(Expression *_lArg, Expression *_rArg, TokenType _type, int _val) {
+        lArg = _lArg;
+        rArg = _rArg;
+        token.type = _type;
+        token.value = _val;
+    }
+
+    virtual ~Expression(){
+    }
+
     Token token;
     Expression* lArg;
     Expression* rArg;
 };
 
-struct Operator {
+struct FunctionCall: public Expression{
+    FunctionCall() {};
+
+    FunctionCall(int _name){
+        token.value = _name;
+        token.type = TT_IDENT;
+    }
 };
 
-struct IfOperator : public Operator {
+struct Operator {
+    virtual ~Operator() {
+    }
+};
+
+struct IfOperator: public Operator {
+    IfOperator(){}
+
+    IfOperator(Expression *_condition, std::vector<Operator*> *_then,
+            std::vector<Operator*> *_else) {
+        condition = _condition;
+        thenPart = *_then;
+        elsePart = *_else;
+    }
     Expression* condition;
     std::vector<Operator*> thenPart;
     std::vector<Operator*> elsePart;
 };
 
-struct WhileOperator : public Operator {
+struct WhileOperator: public Operator {
+    WhileOperator(){}
+
+    WhileOperator(Expression *_condition, std::vector<Operator*> *_body){
+        condition = _condition;
+        body = *_body;
+    }
+
     Expression* condition;
     std::vector<Operator*> body;
 };
 
 struct VarDefOperator : public Operator {
-     int name;
+    int name;
+
+    VarDefOperator(int _name) {
+        name = _name;
+    }
 };
 
-struct AssignOperator : public Operator {
+struct AssignOperator: public Operator {
     int name;
     Expression* value;
+
+    AssignOperator(Expression *_expr, int _name) {
+        value = _expr;
+        name = _name;
+    }
 };
 
-struct ExpressionOperator : public Operator {
+struct ExpressionOperator: public Operator {
     Expression* expr;
+
+    ExpressionOperator(Expression *_expr){
+        expr = _expr;
+    }
 };
 
 struct Function {
+    bool isMain = false; // TODO: check
     int name;
-    bool isMain = false;
     std::vector<Operator*> body;
+
+    Function(int _name, Operator *_op){
+        name = _name;
+        body.push_back(_op);
+    }
+
+    Function(int _name, const std::vector<Operator*>& _body) {
+        name = _name;
+        body = _body;
+    }
 };
 
 struct IR {
+    IR(){}
+    IR(const std::vector<Function*> _functions){
+        functions = _functions;
+    }
+    IR(Function *_func){
+        functions.push_back(_func);
+    }
     std::vector<Function*> functions;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bytecode
 
-enum BCCommandType {
-    IADD, ISUB, IMUL, IDIV, IMOD,
-    LAND, LOR, LNOT,
+enum BCCommandType { //Don't forget enumString at print.cpp
+    IADD,
+    ISUB,
+    IMUL,
+    IDIV,
+    IMOD,
+    LAND,
+    LOR,
+    LNOT,
     IMOV,
     ILOAD,
-    ICMPEQ, ICMPLS,
-    GOTO, IF, RET,
-    IWRITE, IREAD,
+    ICMPEQ,
+    ICMPLS,
+    GOTO,
+    IF,
+    RET,
+    IWRITE,
+    IREAD,
     CALL
 };
 
 struct BCCommand {
+    BCCommand() {
+    }
+
+    BCCommand(int _arg0, int _result, BCCommandType _type) {
+        arg0 = _arg0;
+        arg1 = -1;
+        result = _result;
+        type = _type;
+    }
+
+    BCCommand(int _result, BCCommandType _type) {
+    	arg0 = -1;
+    	arg1 = -1;
+        result = _result;
+        type = _type;
+    }
+
+    BCCommand(int _arg0, int _arg1, int _result, BCCommandType _type) {
+        arg0 = _arg0;
+        arg1 = _arg1;
+        result = _result;
+        type = _type;
+    }
+
     BCCommandType type;
 
     // arguments and result
@@ -112,7 +208,6 @@ struct BCCommand {
 };
 
 struct BCFunction {
-    std::string name;
     int regsNumber;
     std::vector<BCCommand> commands;
 };
