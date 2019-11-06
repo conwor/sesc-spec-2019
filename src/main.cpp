@@ -3,6 +3,7 @@
 
 int main(){
     TestAssign();
+    TestIf();
     return 0;
 }
 

@@ -131,5 +131,106 @@ void TestAssign() {
             cerr << "ASSIGN NUM IS RIGHT!" << endl;
         }
     }
+
+
+}
+
+void TestIf(){
+    {
+        ostringstream exp;
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "8" << endl;
+        exp << "8" << endl;
+        exp << "ILOAD 1 3" << endl;
+        exp << "ILOAD 0 4" << endl;
+        exp << "ICMPEQ 3 4 2" << endl;
+        exp << "ILOAD 0 6" << endl;
+        exp << "ILOAD 0 7" << endl;
+        exp << "ICMPEQ 6 7 5" << endl;
+        exp << "LAND 2 5 1" << endl;
+        exp << "IMOV 1 0" << endl;
+
+        Expression one(1);
+        Expression zero(0);
+
+        Expression eq10(&one, &zero, TT_OPERATION, 6);
+        Expression eq00(&zero, &zero, TT_OPERATION, 6);
+
+        Expression andEq(&eq10, &eq00, TT_OPERATION, 12);
+
+        VarDefOperator var("a");
+
+        AssignOperator assign(&andEq, "a");
+
+        Function func("main", {&var, &assign});
+
+        IR ir;
+        ir.functions = {&func};
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        ostringstream out;
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "LOGICAL EXPRESSIONS ARE WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "LOGICAL EXPRESSIONS ARE RIGHT!" << endl;
+        }
+    }
+    {
+        ostringstream exp;
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "8" << endl;
+        exp << "11" << endl;
+        exp << "ILOAD 1 3" << endl;
+        exp << "ILOAD 2 4" << endl;
+        exp << "IADD 3 4 2" << endl;
+        exp << "ILOAD 3 5" << endl;
+        exp << "ICMPEQ 2 5 1" << endl;
+        exp << "IF 1 9" << endl;
+        exp << "ILOAD 2 6" << endl;
+        exp << "IMOV 6 0" << endl;
+        exp << "GOTO 11" << endl;
+        exp << "ILOAD 1 7" << endl;
+        exp << "IMOV 7 0" << endl;
+
+
+        Expression one(1);
+        Expression two(2);
+        Expression three(3);
+
+        VarDefOperator var("a");
+        AssignOperator assignThen(&one, "a");
+        AssignOperator assignElse(&two, "a");
+
+        Expression sum12(&one, &two, TT_OPERATION, 0);
+        Expression eq3(&sum12, &three, TT_OPERATION, 6);
+
+        IfOperator ifOp;
+        ifOp.condition = &eq3;
+        ifOp.thenPart.push_back(&assignThen);
+        ifOp.elsePart.push_back(&assignElse);
+
+        Function func("main", {&var, &ifOp});
+
+        IR ir;
+        ir.functions = {&func};
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        ostringstream out;
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR IF IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "IF IS RIGHT!" << endl;
+        }
+    }
 }
 

@@ -15,10 +15,25 @@ enum KeyWordType {
 };
 
 enum OperatorType {
-    ADD, SUB, MUL, DIV, MOD,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
     ASSIGN,
-    EQ, NE, LS, BG, LS_EQ, BG_EQ, AND, OR, NOT,
-    OPEN_BRACE, CLOSE_BRACE, OPEN_PARENTHESE, CLOSE_PARENTHESE,
+    EQ,
+    NE,
+    LS,
+    BG,
+    LS_EQ,
+    BG_EQ,
+    AND,
+    OR,
+    NOT,
+    OPEN_BRACE,
+    CLOSE_BRACE,
+    OPEN_PARENTHESE,
+    CLOSE_PARENTHESE,
     SEMICOLON
 };
 
@@ -33,17 +48,16 @@ struct Token {
     int value;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // IR
 
 struct Expression {
-    Expression(int num){
+    Expression(int num) {
         token.type = TokenType::TT_LITERAL;
         token.value = num;
     }
 
-    Expression(Expression *LArg, Expression *RArg, TokenType type, int val){
+    Expression(Expression *LArg, Expression *RArg, TokenType type, int val) {
         lArg = LArg;
         rArg = RArg;
         token.type = type;
@@ -56,34 +70,63 @@ struct Expression {
 };
 
 struct Operator {
-    virtual ~Operator() {}
+    virtual ~Operator() {
+    }
 };
 
-struct IfOperator : public Operator {
+struct IfOperator: public Operator {
+    IfOperator() {
+    }
+    IfOperator(Expression *cond, std::vector<Operator*> *then,
+            std::vector<Operator*> *Else) {
+        condition = cond;
+        thenPart = *then;
+        elsePart = *Else;
+    }
     Expression* condition;
     std::vector<Operator*> thenPart;
     std::vector<Operator*> elsePart;
 };
 
-struct WhileOperator : public Operator {
+struct WhileOperator: public Operator {
     Expression* condition;
     std::vector<Operator*> body;
 };
 
-struct VarDefOperator : public Operator {
+struct VarDefOperator: public Operator {
+    VarDefOperator() {
+    }
+    VarDefOperator(const std::string& Name) {
+        name = Name;
+    }
+
     std::string name;
 };
 
-struct AssignOperator : public Operator {
+struct AssignOperator: public Operator {
+    AssignOperator() {
+    }
+
+    AssignOperator(Expression *expr, const std::string& name) {
+        value = expr;
+        variableName = name;
+    }
     std::string variableName;
     Expression* value;
 };
 
-struct ExpressionOperator : public Operator {
+struct ExpressionOperator: public Operator {
     Expression* expr;
 };
 
 struct Function {
+    Function() {
+    }
+
+    Function(const std::string& Name, const std::vector<Operator*>& Body) {
+        name = Name;
+        body = Body;
+    }
     std::string name;
     std::vector<Operator*> body;
 };
@@ -96,33 +139,42 @@ struct IR {
 // Bytecode
 
 enum BCCommandType {
-    IADD, ISUB, IMUL, IDIV, IMOD,
-    LAND, LOR, LNOT,
+    IADD,
+    ISUB,
+    IMUL,
+    IDIV,
+    IMOD,
+    LAND,
+    LOR,
+    LNOT,
     IMOV,
     ILOAD,
-    ICMPEQ, ICMPLS,
-    GOTO, IF, RET,
-    IWRITE, IREAD,
+    ICMPEQ,
+    ICMPLS,
+    GOTO,
+    IF,
+    RET,
+    IWRITE,
+    IREAD,
     CALL
 };
 
-
-
 struct BCCommand {
-    BCCommand(){}
+    BCCommand() {
+    }
 
-    BCCommand(int Arg0, int Arg1, BCCommandType Type){
+    BCCommand(int Arg0, int Arg1, BCCommandType Type) {
         arg0 = Arg0;
         arg1 = Arg1;
         type = Type;
     }
 
-    BCCommand(int Arg0, BCCommandType Type){
+    BCCommand(int Arg0, BCCommandType Type) {
         arg0 = Arg0;
         type = Type;
     }
 
-    BCCommand(int Arg0, int Arg1, int Result, BCCommandType Type){
+    BCCommand(int Arg0, int Arg1, int Result, BCCommandType Type) {
         arg0 = Arg0;
         arg1 = Arg1;
         result = Result;
@@ -161,4 +213,6 @@ void writeBytecode(Bytecode* bc, std::ostream& os);
 // Bytecode tests
 
 void TestAssign();
+
+void TestIf();
 
