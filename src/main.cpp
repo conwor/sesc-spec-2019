@@ -2,7 +2,7 @@
 #include "base.h"
 
 int main(){
-    TestExpressionAssign();
+    TestAssign();
     return 0;
 }
 

@@ -24,63 +24,51 @@ BCCommandType commandTypeCast(OperatorType type) {
     }
 }
 
-//EXPRESSION
-void addExpression(BCFunction *result, Expression *expr,
-        const map<string, int>& name_to_index, int commandResult) {
+/*
+ * addExpression casts expressions like:
+ * (3 + 123) * (12 * (37 - 12))
+ * in BCCommands like IADD or ILOAD
+ */
+void addExpression(BCFunction *result, Expression *expr, int commandResult) {
     int left, right;
     TokenType leftT, rightT;
     leftT = expr->lArg->token.type;
     rightT = expr->rArg->token.type;
 
+    //Using DFS to go through the tree
     left = regsNumber;
     regsNumber++;
     if (leftT != TokenType::TT_LITERAL) {
-        addExpression(result, expr->lArg, name_to_index, left);
+        addExpression(result, expr->lArg, left);
     }
 
     right = regsNumber;
     regsNumber++;
     if (rightT != TokenType::TT_LITERAL) {
-        addExpression(result, expr->rArg, name_to_index, right);
+        addExpression(result, expr->rArg, right);
     }
 
     if (leftT == TokenType::TT_LITERAL && rightT == TokenType::TT_LITERAL) {
-        BCCommand load0, load1;
+        BCCommand lLoad(expr->lArg->token.value, left, BCCommandType::ILOAD);
+        BCCommand rLoad(expr->rArg->token.value, right, BCCommandType::ILOAD);
 
-        load0.arg0 = expr->lArg->token.value;
-        load0.arg1 = left;
-        load0.type = BCCommandType::ILOAD;
-
-        load1.arg0 = expr->rArg->token.value;
-        load1.arg1 = right;
-        load1.type = BCCommandType::ILOAD;
-
-        result->commands.push_back(load0);
-        result->commands.push_back(load1);
-    } else if(leftT != TokenType::TT_LITERAL){
-        BCCommand load;
-
-        load.arg0 = expr->rArg->token.value;
-        load.arg1 = right;
-        load.type = BCCommandType::ILOAD;
-
+        result->commands.push_back(lLoad);
+        result->commands.push_back(rLoad);
+    } else if (rightT == TokenType::TT_LITERAL) {
+        BCCommand load(expr->rArg->token.value, right, BCCommandType::ILOAD);
 
         result->commands.push_back(load);
-    } else if(rightT != TokenType::TT_LITERAL){
-        BCCommand load;
-
-        load.arg0 = expr->lArg->token.value;
-        load.arg1 = left;
-        load.type = BCCommandType::ILOAD;
+    } else if (leftT == TokenType::TT_LITERAL) {
+        BCCommand load(expr->lArg->token.value, left, BCCommandType::ILOAD);
 
         result->commands.push_back(load);
     }
 
-    BCCommand com;
-    com.arg0 = left;
-    com.arg1 = right;
-    com.result = commandResult;
-    com.type = commandTypeCast(static_cast<OperatorType>(expr->token.value));
+    //Casts OperatorType into the BCCommandType
+    BCCommandType comType = commandTypeCast(
+            static_cast<OperatorType>(expr->token.value));
+
+    BCCommand com(left, right, commandResult, comType);
 
     result->commands.push_back(com);
 }
@@ -96,13 +84,24 @@ BCFunction *generateFunction(Function *func) {
         if (asPtr != NULL) {
             BCCommand assign;
 
-            int commandResult = regsNumber;
-            regsNumber++;
-            addExpression(result, asPtr->value, name_to_index, commandResult);
-
-            assign.arg0 = name_to_index[asPtr->variableName];
-            assign.arg1 = commandResult;
+            assign.arg1 = name_to_index[asPtr->variableName];
             assign.type = BCCommandType::IMOV;
+
+            if (asPtr->value->token.type != TokenType::TT_LITERAL) {
+                //For a := 17 + 21 * 3
+                int commandResult = regsNumber;
+                regsNumber++;
+                addExpression(result, asPtr->value, commandResult);
+                assign.arg0 = commandResult;
+            } else {
+                //For a := 12
+                BCCommand load(asPtr->value->token.value, regsNumber,
+                        BCCommandType::ILOAD);
+                result->commands.push_back(load);
+
+                assign.arg0 = regsNumber;
+                regsNumber++;
+            }
 
             result->commands.push_back(assign);
         }

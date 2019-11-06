@@ -5,9 +5,6 @@
 
 using namespace std;
 
-#define PRINTBCTYPE(type)   \
-    os << to_string(type) << ' ';
-
 static vector<string> enumString= {"IADD", "ISUB", "IMUL", "IDIV", "IMOD",
         "LAND", "LOR", "LNOT",
         "IMOV",
@@ -20,25 +17,30 @@ static vector<string> enumString= {"IADD", "ISUB", "IMUL", "IDIV", "IMOD",
 void printFunc(BCFunction *func, ostream& os){
     for(auto command: func->commands){
         os << enumString[static_cast<int>(command.type)] << ' ';
-        if(command.type == BCCommandType::IADD ||
-           command.type == BCCommandType::IMUL ||
-           command.type == BCCommandType::IDIV ||
-           command.type == BCCommandType::ISUB ||
-           command.type == BCCommandType::IMOD ||
-           command.type == BCCommandType::LOR ||
-           command.type == BCCommandType::LAND ||
-           command.type == BCCommandType::LNOT ||
-           command.type == BCCommandType::ICMPEQ||
-           command.type == BCCommandType::ICMPLS){
-            os << command.arg0 << ' ' << command.arg1 << ' ' << command.result << endl;
-        } else if(command.type == BCCommandType::IMOV ||
-                command.type == BCCommandType::ILOAD ||
-                command.type == BCCommandType::IF){
+        switch(command.type){
+        case IADD:
+        case IMUL:
+        case IDIV:
+        case ISUB:
+        case IMOD:
+        case LOR:
+        case LAND:
+        case LNOT:
+        case ICMPEQ:
+        case ICMPLS:
+            os << command.arg0 << ' ' << command.arg1 <<
+            ' ' << command.result << endl;
+            break;
+        case IMOV:
+        case ILOAD:
+        case IF:
             os << command.arg0 << ' ' << command.arg1 << endl;
-        } else if(command.type == BCCommandType::RET){
+            break;
+        case RET:
             continue;
-        } else{
-            cout << command.arg0 << endl;
+            break;
+        default:
+            os << command.arg0 << endl;
         }
     }
 }

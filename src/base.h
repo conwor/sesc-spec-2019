@@ -38,6 +38,18 @@ struct Token {
 // IR
 
 struct Expression {
+    Expression(int num){
+        token.type = TokenType::TT_LITERAL;
+        token.value = num;
+    }
+
+    Expression(Expression *LArg, Expression *RArg, TokenType type, int val){
+        lArg = LArg;
+        rArg = RArg;
+        token.type = type;
+        token.value = val;
+    }
+
     Token token;
     Expression* lArg;
     Expression* rArg;
@@ -97,6 +109,26 @@ enum BCCommandType {
 
 
 struct BCCommand {
+    BCCommand(){}
+
+    BCCommand(int Arg0, int Arg1, BCCommandType Type){
+        arg0 = Arg0;
+        arg1 = Arg1;
+        type = Type;
+    }
+
+    BCCommand(int Arg0, BCCommandType Type){
+        arg0 = Arg0;
+        type = Type;
+    }
+
+    BCCommand(int Arg0, int Arg1, int Result, BCCommandType Type){
+        arg0 = Arg0;
+        arg1 = Arg1;
+        result = Result;
+        type = Type;
+    }
+
     BCCommandType type;
 
     // arguments and result
@@ -128,5 +160,5 @@ void writeBytecode(Bytecode* bc, std::ostream& os);
 
 // Bytecode tests
 
-void TestExpressionAssign();
+void TestAssign();
 
