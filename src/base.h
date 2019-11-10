@@ -52,8 +52,8 @@ struct Token {
 // IR
 
 struct Expression {
-    Expression(int num) {
-        token.type = TokenType::TT_LITERAL;
+    Expression(int num, TokenType t) {
+        token.type = t;
         token.value = num;
     }
 
@@ -123,6 +123,11 @@ struct Function {
     Function() {
     }
 
+    Function(const std::string& Name, Operator *op){
+        name = Name;
+        body.push_back(op);
+    }
+
     Function(const std::string& Name, const std::vector<Operator*>& Body) {
         name = Name;
         body = Body;
@@ -132,6 +137,13 @@ struct Function {
 };
 
 struct IR {
+    IR(){}
+    IR(const std::vector<Function*> funcs){
+        functions = funcs;
+    }
+    IR(Function *func){
+        functions.push_back(func);
+    }
     std::vector<Function*> functions;
 };
 
@@ -216,3 +228,4 @@ void TestAssign();
 
 void TestIf();
 
+void TestWhile();

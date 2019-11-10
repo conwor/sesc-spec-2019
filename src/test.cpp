@@ -54,11 +54,11 @@ void TestAssign() {
             throw system_error();
         }
 
-        Expression three(3);
-        Expression ten(10);
-        Expression one(1);
-        Expression eleven(11);
-        Expression two(2);
+        Expression three(3, TT_LITERAL);
+        Expression ten(10, TT_LITERAL);
+        Expression one(1, TT_LITERAL);
+        Expression eleven(11, TT_LITERAL);
+        Expression two(2, TT_LITERAL);
 
         Expression sum31(&three, &one, TT_OPERATION, 0);
         Expression sum112(&eleven, &two, TT_OPERATION, 0);
@@ -106,7 +106,7 @@ void TestAssign() {
         VarDefOperator var;
         var.name = "a";
 
-        Expression ten(10);
+        Expression ten(10, TT_LITERAL);
 
         AssignOperator assign;
         assign.variableName = "a";
@@ -131,8 +131,121 @@ void TestAssign() {
             cerr << "ASSIGN NUM IS RIGHT!" << endl;
         }
     }
+    {
+        ostringstream exp;
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "3" << endl;
+        exp << "3" << endl;
+        exp << "ILOAD 3 2" << endl;
+        exp << "IMUL 1 2 1" << endl;
+        exp << "IMOV 1 0" << endl;
+        ostringstream out;
 
+        VarDefOperator var("a");
 
+        Expression three(3, TT_LITERAL);
+        Expression one(1, TT_LITERAL);
+
+        Expression varA(1, TT_IDENT);
+
+        Expression mul3a(&varA, &three, TT_OPERATION, 2);
+
+        AssignOperator assign(&mul3a, "a");
+
+        Function func("main", {&var, &assign});
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(exp.str() != out.str()){
+            cerr << "ERROR ASSIGN VAR SIMPLE EXPRESSION IS WRONG" << endl;
+            throw system_error();
+        } else{
+            cerr << "ASSIGN VAR SIMPLE EXPRESSION IS RIGHT" << endl;
+        }
+    }
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "3" << endl;
+        exp << "2" << endl;
+        exp << "IMOV 0 2" << endl;
+        exp << "IMOV 2 1" << endl;
+
+        VarDefOperator varA("a");
+        VarDefOperator varB("b");
+
+        Expression var(0, TT_IDENT);
+
+        AssignOperator assign(&var, "b");
+
+        Function func("main", {&varA, &varB, &assign});
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(exp.str() != out.str()){
+            cerr << "ERROR ASSIGN VAR IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "STUPID ASSIGN VAR IS RIGHT!" << endl;
+        }
+    }
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "7" << endl;
+        exp << "6" << endl;
+        exp << "IADD 0 1 4" << endl;
+        exp << "ILOAD 3 5" << endl;
+        exp << "IADD 4 5 3" << endl;
+        exp << "ILOAD 3 6" << endl;
+        exp << "IMUL 6 3 2" << endl;
+        exp << "IMOV 2 1" << endl;
+
+        VarDefOperator varA("a");
+        VarDefOperator varB("b");
+
+        Expression var0(0, TT_IDENT);
+        Expression var1(1, TT_IDENT);
+
+        Expression three(3, TT_LITERAL);
+
+        Expression sumBA(&var0, &var1, TT_OPERATION, 0);
+        Expression sumBA3(&sumBA, &three, TT_OPERATION, 0);
+        Expression mul3BA3(&three, &sumBA3, TT_OPERATION, 2);
+
+        AssignOperator assign(&mul3BA3, "b");
+
+        Function func("main", {&varA, &varB, &assign});
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR ASSIGN VAR EXPRESSION IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "ASSIGN VAR EXPRESSION IS RIGHT!" << endl;
+        }
+
+    }
 }
 
 void TestIf(){
@@ -151,8 +264,8 @@ void TestIf(){
         exp << "LAND 2 5 1" << endl;
         exp << "IMOV 1 0" << endl;
 
-        Expression one(1);
-        Expression zero(0);
+        Expression one(1, TT_LITERAL);
+        Expression zero(0, TT_LITERAL);
 
         Expression eq10(&one, &zero, TT_OPERATION, 6);
         Expression eq00(&zero, &zero, TT_OPERATION, 6);
@@ -199,9 +312,9 @@ void TestIf(){
         exp << "IMOV 7 0" << endl;
 
 
-        Expression one(1);
-        Expression two(2);
-        Expression three(3);
+        Expression one(1, TT_LITERAL);
+        Expression two(2, TT_LITERAL);
+        Expression three(3, TT_LITERAL);
 
         VarDefOperator var("a");
         AssignOperator assignThen(&one, "a");
@@ -214,22 +327,74 @@ void TestIf(){
         ifOp.condition = &eq3;
         ifOp.thenPart.push_back(&assignThen);
         ifOp.elsePart.push_back(&assignElse);
-
         Function func("main", {&var, &ifOp});
 
         IR ir;
         ir.functions = {&func};
-
         Bytecode *bc = generateBytecode(&ir);
 
         ostringstream out;
         writeBytecode(bc, out);
-
         if(out.str() != exp.str()){
             cerr << "ERROR IF IS WRONG!" << endl;
             throw system_error();
         } else{
             cerr << "IF IS RIGHT!" << endl;
+        }
+    }
+}
+
+void TestWhile(){
+    {
+        stringstream exp;
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "10" << endl;
+        exp << "13" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "IMOV 1 0" << endl;
+        exp << "ILOAD 1 4" << endl;
+        exp << "ILOAD 9 5" << endl;
+        exp << "IADD 4 5 3" << endl;
+        exp << "ILOAD 10 6" << endl;
+        exp << "ICMPEQ 3 6 2" << endl;
+        exp << "IF 2 13" << endl;
+        exp << "ILOAD 1 8" << endl;
+        exp << "ILOAD 9 9" << endl;
+        exp << "IADD 8 9 7" << endl;
+        exp << "IMOV 7 0" << endl;
+        exp << "GOTO 2" << endl;
+        stringstream out;
+
+
+        Expression one(1, TT_LITERAL);
+        Expression ten(10, TT_LITERAL);
+        Expression nine(9, TT_LITERAL);
+
+        Expression sum19(&one, &nine, TT_OPERATION, 0);
+        Expression eq10(&sum19, &ten, TT_OPERATION, 6);
+
+        VarDefOperator var("a");
+
+        AssignOperator assign0(&one, "a");
+
+        AssignOperator assign1(&sum19, "a");
+        WhileOperator whileOp;
+        whileOp.condition = &eq10;
+        whileOp.body.push_back(&assign1);
+        Function func("main", {&var, &assign0, &whileOp});
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR WHILE IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "WHILE IS RIGHT!" << endl;
         }
     }
 }

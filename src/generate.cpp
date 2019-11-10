@@ -37,43 +37,61 @@ BCCommandType commandTypeCast(OperatorType type) {
 
 /*
  * addExpression casts expressions like:
- * (3 + 123) * (12 * (37 - 12)) or (1 == 2) && (3 != 4)
+ * (3 + 123) * (12 * (37 - 12)) or (1 == 2) && (3 != 4) or (a + 2) * 10
  * in BCCommands like IADD, ILOAD or LAND
  */
 void addExpression(vector<BCCommand> *result, Expression *expr, int commandResult) {
     int left, right;
     TokenType leftT, rightT;
+
+    if(expr->token.type == TT_IDENT){
+        BCCommand ass(expr->token.value, commandResult, BCCommandType::IMOV);
+        result->push_back(ass);
+        return;
+    }
+
     leftT = expr->lArg->token.type;
     rightT = expr->rArg->token.type;
 
     //Using DFS to go through the tree
-    left = regsNumber;
-    regsNumber++;
-    if (leftT != TokenType::TT_LITERAL) {
+
+    if (leftT != TokenType::TT_LITERAL && leftT != TokenType::TT_IDENT) {
+        left = regsNumber;
+        regsNumber++;
         addExpression(result, expr->lArg, left);
     }
 
-    right = regsNumber;
-    regsNumber++;
-    if (rightT != TokenType::TT_LITERAL) {
+    if (rightT != TokenType::TT_LITERAL && rightT != TokenType::TT_IDENT) {
+        right = regsNumber;
+        regsNumber++;
         addExpression(result, expr->rArg, right);
     }
 
-    if (leftT == TokenType::TT_LITERAL && rightT == TokenType::TT_LITERAL) {
+    switch(leftT){
+    case TT_LITERAL:{
+        left = regsNumber;
+        regsNumber++;
         BCCommand lLoad(expr->lArg->token.value, left, BCCommandType::ILOAD);
-        BCCommand rLoad(expr->rArg->token.value, right, BCCommandType::ILOAD);
-
         result->push_back(lLoad);
-        result->push_back(rLoad);
-    } else if (rightT == TokenType::TT_LITERAL) {
-        BCCommand load(expr->rArg->token.value, right, BCCommandType::ILOAD);
-
-        result->push_back(load);
-    } else if (leftT == TokenType::TT_LITERAL) {
-        BCCommand load(expr->lArg->token.value, left, BCCommandType::ILOAD);
-
-        result->push_back(load);
+        break;}
+    case TT_IDENT:
+        left = expr->lArg->token.value;
+        break;
     }
+
+
+    switch(rightT){
+    case TT_LITERAL:{
+        right = regsNumber;
+        regsNumber++;
+        BCCommand rLoad(expr->rArg->token.value, right, BCCommandType::ILOAD);
+        result->push_back(rLoad);
+        break;}
+    case TT_IDENT:
+        right = expr->rArg->token.value;
+        break;
+    }
+
 
     //Casts OperatorType into the BCCommandType
     BCCommandType comType = commandTypeCast(
@@ -163,6 +181,36 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
                 result.push_back(i);
             }
 
+        }
+
+
+        /*
+         * While
+         *
+         * If condition is true, it goes to the main part's start
+         * If condition is false, it goes through the main part
+         * There is goto to condition in the end of main part
+         */
+        WhileOperator *whilePtr = dynamic_cast<WhileOperator*>(i);
+        if(whilePtr != NULL){
+            int commandResult = regsNumber;
+            regsNumber++;
+
+            BCCommand gotoIf(result.size(), GOTO);
+
+            addExpression(&result, whilePtr->condition, commandResult);
+
+            vector<BCCommand> cmds = generateCommands(&(whilePtr->body), name_to_index);
+
+            BCCommand ifCom(commandResult, result.size() + cmds.size() + 2, IF);
+
+            result.push_back(ifCom);
+
+            for(auto i: cmds){
+                result.push_back(i);
+            }
+
+            result.push_back(gotoIf);
         }
 
     }

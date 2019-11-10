@@ -4,6 +4,7 @@
 int main(){
     TestAssign();
     TestIf();
+    TestWhile();
     return 0;
 }
 
