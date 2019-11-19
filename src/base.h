@@ -52,16 +52,13 @@ struct Token {
 // IR
 
 struct Expression {
-    Expression(int num, TokenType t) {
-        token.type = t;
-        token.value = num;
-    }
+    Expression(){};
 
-    Expression(Expression *LArg, Expression *RArg, TokenType type, int val) {
-        lArg = LArg;
-        rArg = RArg;
-        token.type = type;
-        token.value = val;
+    Expression(Expression *_lArg, Expression *_rArg, TokenType _type, int _val) {
+        lArg = _lArg;
+        rArg = _rArg;
+        token.type = _type;
+        token.value = _val;
     }
 
     Token token;
@@ -75,13 +72,13 @@ struct Operator {
 };
 
 struct IfOperator: public Operator {
-    IfOperator() {
-    }
-    IfOperator(Expression *cond, std::vector<Operator*> *then,
-            std::vector<Operator*> *Else) {
-        condition = cond;
-        thenPart = *then;
-        elsePart = *Else;
+    IfOperator() {}
+
+    IfOperator(Expression *_condition, std::vector<Operator*> *_then,
+            std::vector<Operator*> *_else) {
+        condition = _condition;
+        thenPart = *_then;
+        elsePart = *_else;
     }
     Expression* condition;
     std::vector<Operator*> thenPart;
@@ -89,33 +86,42 @@ struct IfOperator: public Operator {
 };
 
 struct WhileOperator: public Operator {
+    WhileOperator() {}
+
+    WhileOperator(Expression *_condition, std::vector<Operator*> *_body){
+        condition = _condition;
+        body = *_body;
+    }
+
     Expression* condition;
     std::vector<Operator*> body;
 };
 
 struct VarDefOperator: public Operator {
-    VarDefOperator() {
-    }
-    VarDefOperator(const std::string& Name) {
-        name = Name;
+    VarDefOperator() {}
+
+    VarDefOperator(const std::string& _name) {
+        name = _name;
     }
 
     std::string name;
 };
 
 struct AssignOperator: public Operator {
-    AssignOperator() {
-    }
+    AssignOperator() {}
 
-    AssignOperator(Expression *expr, const std::string& name) {
-        value = expr;
-        variableName = name;
+    AssignOperator(Expression *_expr, const std::string& _name) {
+        value = _expr;
+        variableName = _name;
     }
     std::string variableName;
     Expression* value;
 };
 
 struct ExpressionOperator: public Operator {
+    ExpressionOperator(Expression *_expr){
+        expr = _expr;
+    }
     Expression* expr;
 };
 
@@ -123,14 +129,14 @@ struct Function {
     Function() {
     }
 
-    Function(const std::string& Name, Operator *op){
-        name = Name;
-        body.push_back(op);
+    Function(const std::string& _name, Operator *_op){
+        name = _name;
+        body.push_back(_op);
     }
 
-    Function(const std::string& Name, const std::vector<Operator*>& Body) {
-        name = Name;
-        body = Body;
+    Function(const std::string& _name, const std::vector<Operator*>& _body) {
+        name = _name;
+        body = _body;
     }
     std::string name;
     std::vector<Operator*> body;
@@ -138,11 +144,11 @@ struct Function {
 
 struct IR {
     IR(){}
-    IR(const std::vector<Function*> funcs){
-        functions = funcs;
+    IR(const std::vector<Function*> _functions){
+        functions = _functions;
     }
-    IR(Function *func){
-        functions.push_back(func);
+    IR(Function *_func){
+        functions.push_back(_func);
     }
     std::vector<Function*> functions;
 };
@@ -150,7 +156,7 @@ struct IR {
 ///////////////////////////////////////////////////////////////////////////////
 // Bytecode
 
-enum BCCommandType {
+enum BCCommandType { //Don't forget enumString at print.cpp
     IADD,
     ISUB,
     IMUL,
@@ -175,22 +181,22 @@ struct BCCommand {
     BCCommand() {
     }
 
-    BCCommand(int Arg0, int Arg1, BCCommandType Type) {
-        arg0 = Arg0;
-        arg1 = Arg1;
-        type = Type;
+    BCCommand(int _arg0, int _result, BCCommandType _type) {
+        arg0 = _arg0;
+        result = _result;
+        type = _type;
     }
 
-    BCCommand(int Arg0, BCCommandType Type) {
-        arg0 = Arg0;
-        type = Type;
+    BCCommand(int _result, BCCommandType _type) {
+        result = _result;
+        type = _type;
     }
 
-    BCCommand(int Arg0, int Arg1, int Result, BCCommandType Type) {
-        arg0 = Arg0;
-        arg1 = Arg1;
-        result = Result;
-        type = Type;
+    BCCommand(int _arg0, int _arg1, int _result, BCCommandType _type) {
+        arg0 = _arg0;
+        arg1 = _arg1;
+        result = _result;
+        type = _type;
     }
 
     BCCommandType type;
@@ -211,21 +217,3 @@ struct BCFunction {
 struct Bytecode {
     std::vector<BCFunction*> functions;
 };
-
-// Bytecode Generating
-
-Bytecode* generateBytecode(IR* ir);
-
-// Bytecode print
-
-void writeBytecode(Bytecode* bc, std::string filename);
-
-void writeBytecode(Bytecode* bc, std::ostream& os);
-
-// Bytecode tests
-
-void TestAssign();
-
-void TestIf();
-
-void TestWhile();

@@ -157,7 +157,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     BCCommand com;
     if (comType == LNOT) {
         com.arg0 = left;
-        com.arg1 = commandResult;
+        com.result = commandResult;
         com.type = comType;
     } else {
         com.arg0 = left;
@@ -174,12 +174,12 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
     vector<BCCommand> result;
     for (auto i : *operators) {
 
-//ASSIGN
+        //ASSIGN
         AssignOperator* asPtr = dynamic_cast<AssignOperator*>(i);
         if (asPtr != NULL) {
             BCCommand assign;
 
-            assign.arg1 = (*name_to_index)[asPtr->variableName];
+            assign.result = (*name_to_index)[asPtr->variableName];
             assign.type = BCCommandType::IMOV;
 
             if (asPtr->value->token.type != TokenType::TT_LITERAL) {
@@ -201,7 +201,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
             result.push_back(assign);
         }
 
-//VARDEF
+        //VARDEF
         VarDefOperator* varPtr = dynamic_cast<VarDefOperator*>(i);
         if (varPtr != NULL) {
             (*name_to_index)[varPtr->name] = regsNumber;
@@ -228,7 +228,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
             vector<BCCommand> elsePart = generateCommands(&(ifPtr->elsePart),
                     name_to_index);
 
-            ifCom.arg1 = result.size() + 2 + elsePart.size();
+            ifCom.result = result.size() + 2 + elsePart.size();
             ifCom.type = BCCommandType::IF;
 
             result.push_back(ifCom);
@@ -241,7 +241,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
                     name_to_index);
 
             BCCommand gotoEndOfThen;
-            gotoEndOfThen.arg0 = result.size() + 1 + thenPart.size();
+            gotoEndOfThen.result = result.size() + 1 + thenPart.size();
             gotoEndOfThen.type = BCCommandType::GOTO;
 
             result.push_back(gotoEndOfThen);
@@ -281,6 +281,15 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
 
             result.push_back(gotoIf);
         }
+
+        ExpressionOperator *exprPtr = dynamic_cast<ExpressionOperator*>(i);
+        if(exprPtr != NULL){
+            int commandResult = regsNumber;
+            regsNumber++;
+
+            addExpression(&result, exprPtr->expr, commandResult);
+        }
+
 
     }
     return result;
