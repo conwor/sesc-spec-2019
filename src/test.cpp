@@ -209,11 +209,11 @@ void TestAssign() {
         exp << "main" << endl;
         exp << "7" << endl;
         exp << "6" << endl;
-        exp << "IADD 0 1 4" << endl;
-        exp << "ILOAD 3 5" << endl;
-        exp << "IADD 4 5 3" << endl;
+        exp << "ILOAD 3 3" << endl;
+        exp << "IADD 0 1 5" << endl;
         exp << "ILOAD 3 6" << endl;
-        exp << "IMUL 6 3 2" << endl;
+        exp << "IADD 5 6 4" << endl;
+        exp << "IMUL 3 4 2" << endl;
         exp << "IMOV 2 1" << endl;
 
         VarDefOperator varA("a");
@@ -244,11 +244,116 @@ void TestAssign() {
         } else{
             cerr << "ASSIGN VAR EXPRESSION IS RIGHT!" << endl;
         }
-
     }
 }
 
 void TestIf(){
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        //(1 < 2 && 2 > 1) && (1 >= 0 || 2 != 0)
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "21" << endl;
+        exp << "22" << endl;
+        exp << "ILOAD 1 4" << endl;
+        exp << "ILOAD 2 5" << endl;
+        exp << "ICMPLS 4 5 3" << endl;
+        exp << "ILOAD 2 7" << endl;
+        exp << "ILOAD 1 8" << endl;
+        exp << "ICMPLS 7 8 9" << endl;
+        exp << "LNOT 9 9" << endl;
+        exp << "ICMPEQ 7 8 10" << endl;
+        exp << "LNOT 10 11" << endl;
+        exp << "LAND 9 11 6" << endl;
+        exp << "LAND 3 6 2" << endl;
+        exp << "ILOAD 0 14" << endl;
+        exp << "ILOAD 2 15" << endl;
+        exp << "ICMPEQ 14 15 16" << endl;
+        exp << "LNOT 16 13" << endl;
+        exp << "ILOAD 1 18" << endl;
+        exp << "ILOAD 0 19" << endl;
+        exp << "ICMPLS 18 19 20" << endl;
+        exp << "LNOT 20 17" << endl;
+        exp << "LOR 13 17 12" << endl;
+        exp << "LAND 2 12 1" << endl;
+        exp << "IMOV 1 0" << endl;
+
+        Expression one(1, TT_LITERAL);
+        Expression two(2, TT_LITERAL);
+        Expression zero(0, TT_LITERAL);
+
+        Expression Less(&one, &two, TT_OPERATION, 8);
+        Expression Big(&two, &one, TT_OPERATION, 9);
+
+        Expression BigEq(&one, &zero, TT_OPERATION, 11);
+        Expression NotEq(&zero, &two, TT_OPERATION, 7);
+
+        Expression firstAnd(&Less, &Big, TT_OPERATION, 12);
+        Expression Or(&NotEq, &BigEq, TT_OPERATION, 13);
+
+        Expression And(&firstAnd, &Or, TT_OPERATION, 12);
+
+        VarDefOperator var("a");
+
+        AssignOperator assign(&And, "a");
+
+        Function func("main", {&var, &assign});
+
+        IR ir;
+        ir.functions = {&func};
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR HARD LOGICAL EXPRESSIONS ARE WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "HARD LOGICAL EXPRESSIONS ARE RIGHT!" << endl;
+        }
+    }
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "5" << endl;
+        exp << "5" << endl;
+        exp << "ILOAD 0 2" << endl;
+        exp << "ILOAD 2 3" << endl;
+        exp << "ICMPEQ 2 3 4" << endl;
+        exp << "LNOT 4 1" << endl;
+        exp << "IMOV 1 0" << endl;
+
+
+        Expression one(0, TT_LITERAL);
+        Expression two(2, TT_LITERAL);
+
+        Expression notEq(&one, &two, TT_OPERATION, 7);
+
+        VarDefOperator var("a");
+
+        AssignOperator assign(&notEq, "a");
+
+        Function func("main", {&var, &assign});
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(exp.str() != out.str()){
+            cerr << "ERROR NOT EQUAL IS WRONG!" << endl;
+            throw system_error();
+        } else {
+            cerr << "NOT EQUAL IS RIGHT!" << endl;
+        }
+    }
     {
         ostringstream exp;
         exp << "1" << endl;

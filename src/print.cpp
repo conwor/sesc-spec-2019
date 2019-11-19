@@ -25,13 +25,13 @@ void printFunc(BCFunction *func, ostream& os){
         case IMOD:
         case LOR:
         case LAND:
-        case LNOT:
         case ICMPEQ:
         case ICMPLS:
             os << command.arg0 << ' ' << command.arg1 <<
             ' ' << command.result << endl;
             break;
         case IMOV:
+        case LNOT:
         case ILOAD:
         case IF:
             os << command.arg0 << ' ' << command.arg1 << endl;
