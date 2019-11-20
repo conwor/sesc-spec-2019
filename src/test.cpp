@@ -1,10 +1,26 @@
 #include "base.h"
+#include "generate.h"
+#include "print.h"
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <exception>
 
 using namespace std;
+
+Expression makeIntExpr(int i){
+    Expression result;
+    result.token.type = TT_LITERAL;
+    result.token.value = i;
+    return result;
+}
+
+Expression makeVarExpr(int reg){
+    Expression result;
+    result.token.type = TT_IDENT;
+    result.token.value = reg;
+    return result;
+}
 
 void TestAssign() {
     {
@@ -54,11 +70,11 @@ void TestAssign() {
             throw system_error();
         }
 
-        Expression three(3, TT_LITERAL);
-        Expression ten(10, TT_LITERAL);
-        Expression one(1, TT_LITERAL);
-        Expression eleven(11, TT_LITERAL);
-        Expression two(2, TT_LITERAL);
+        Expression three = makeIntExpr(3);
+        Expression ten = makeIntExpr(10);
+        Expression one = makeIntExpr(1);
+        Expression eleven = makeIntExpr(11);
+        Expression two = makeIntExpr(2);
 
         Expression sum31(&three, &one, TT_OPERATION, 0);
         Expression sum112(&eleven, &two, TT_OPERATION, 0);
@@ -106,7 +122,7 @@ void TestAssign() {
         VarDefOperator var;
         var.name = "a";
 
-        Expression ten(10, TT_LITERAL);
+        Expression ten = makeIntExpr(10);
 
         AssignOperator assign;
         assign.variableName = "a";
@@ -144,10 +160,9 @@ void TestAssign() {
 
         VarDefOperator var("a");
 
-        Expression three(3, TT_LITERAL);
-        Expression one(1, TT_LITERAL);
+        Expression three = makeIntExpr(3);
 
-        Expression varA(1, TT_IDENT);
+        Expression varA = makeVarExpr(1);
 
         Expression mul3a(&varA, &three, TT_OPERATION, 2);
 
@@ -182,7 +197,7 @@ void TestAssign() {
         VarDefOperator varA("a");
         VarDefOperator varB("b");
 
-        Expression var(0, TT_IDENT);
+        Expression var = makeVarExpr(0);
 
         AssignOperator assign(&var, "b");
 
@@ -219,10 +234,10 @@ void TestAssign() {
         VarDefOperator varA("a");
         VarDefOperator varB("b");
 
-        Expression var0(0, TT_IDENT);
-        Expression var1(1, TT_IDENT);
+        Expression var0 = makeVarExpr(0);
+        Expression var1 = makeVarExpr(1);
 
-        Expression three(3, TT_LITERAL);
+        Expression three = makeIntExpr(3);
 
         Expression sumBA(&var0, &var1, TT_OPERATION, 0);
         Expression sumBA3(&sumBA, &three, TT_OPERATION, 0);
@@ -280,9 +295,9 @@ void TestIf(){
         exp << "LAND 2 12 1" << endl;
         exp << "IMOV 1 0" << endl;
 
-        Expression one(1, TT_LITERAL);
-        Expression two(2, TT_LITERAL);
-        Expression zero(0, TT_LITERAL);
+        Expression one = makeIntExpr(1);
+        Expression two = makeIntExpr(2);
+        Expression zero = makeIntExpr(0);
 
         Expression Less(&one, &two, TT_OPERATION, 8);
         Expression Big(&two, &one, TT_OPERATION, 9);
@@ -330,8 +345,8 @@ void TestIf(){
         exp << "IMOV 1 0" << endl;
 
 
-        Expression one(0, TT_LITERAL);
-        Expression two(2, TT_LITERAL);
+        Expression one = makeIntExpr(0);
+        Expression two = makeIntExpr(2);
 
         Expression notEq(&one, &two, TT_OPERATION, 7);
 
@@ -369,8 +384,8 @@ void TestIf(){
         exp << "LAND 2 5 1" << endl;
         exp << "IMOV 1 0" << endl;
 
-        Expression one(1, TT_LITERAL);
-        Expression zero(0, TT_LITERAL);
+        Expression one = makeIntExpr(1);
+        Expression zero = makeIntExpr(0);
 
         Expression eq10(&one, &zero, TT_OPERATION, 6);
         Expression eq00(&zero, &zero, TT_OPERATION, 6);
@@ -417,9 +432,9 @@ void TestIf(){
         exp << "IMOV 7 0" << endl;
 
 
-        Expression one(1, TT_LITERAL);
-        Expression two(2, TT_LITERAL);
-        Expression three(3, TT_LITERAL);
+        Expression one = makeIntExpr(1);
+        Expression two = makeIntExpr(2);
+        Expression three = makeIntExpr(3);
 
         VarDefOperator var("a");
         AssignOperator assignThen(&one, "a");
@@ -472,9 +487,9 @@ void TestWhile(){
         stringstream out;
 
 
-        Expression one(1, TT_LITERAL);
-        Expression ten(10, TT_LITERAL);
-        Expression nine(9, TT_LITERAL);
+        Expression one = makeIntExpr(1);
+        Expression ten = makeIntExpr(10);
+        Expression nine = makeIntExpr(9);
 
         Expression sum19(&one, &nine, TT_OPERATION, 0);
         Expression eq10(&sum19, &ten, TT_OPERATION, 6);
@@ -500,6 +515,124 @@ void TestWhile(){
             throw system_error();
         } else{
             cerr << "WHILE IS RIGHT!" << endl;
+        }
+    }
+}
+
+void TestMultiFunc(){
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "2" << endl;
+        exp << "foo" << endl;
+        exp << "4" << endl;
+        exp << "4" << endl;
+        exp << "ILOAD 1 2" << endl;
+        exp << "ILOAD 2 3" << endl;
+        exp << "IADD 2 3 1" << endl;
+        exp << "IMOV 1 0" << endl;
+        exp << "baz" << endl;
+        exp << "4" << endl;
+        exp << "4" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "ILOAD 1 3" << endl;
+        exp << "ISUB 2 3 1" << endl;
+        exp << "IMOV 1 0" << endl;
+
+        Expression one = makeIntExpr(1);
+        Expression two = makeIntExpr(2);
+
+        Expression sum12(&one, &two, TT_OPERATION, IADD);
+        Expression sub21(&two, &one, TT_OPERATION, ISUB);
+
+        VarDefOperator var1("a");
+        VarDefOperator var2("a");
+
+        AssignOperator assign1(&sum12, "a");
+        AssignOperator assign2(&sub21, "a");
+
+        Function func1("foo", {&var1, &assign1});
+        Function func2("baz", {&var2, &assign2});
+
+        IR ir({&func1, &func2});
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR MULTI-FUNC IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "MULTI-FUNC IS RIGHT!" << endl;
+        }
+    }
+}
+
+void TestExpressionOp(){
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "3" << endl;
+        exp << "3" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "IMUL 1 2 0" << endl;
+
+        Expression one = makeIntExpr(1);
+        Expression two = makeIntExpr(2);
+
+        Expression mul12(&one, &two, TT_OPERATION, IMUL);
+
+        ExpressionOperator expr(&mul12);
+
+        Function func("main", &expr);
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR EXPRESSION OPERATOR IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "EXPRESSION OPERATOR IS RIGHT!" << endl;
+        }
+    }
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "1" << endl;
+        exp << "main" << endl;
+        exp << "1" << endl;
+        exp << "1" << endl;
+        exp << "ILOAD 1 0" << endl;
+
+
+        Expression one = makeIntExpr(1);
+
+        ExpressionOperator exprOp(&one);
+
+        Function func("main", &exprOp);
+
+        IR ir(&func);
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR SIMPLE EXPRESSIONS ARE WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "SIMPLE EXPRESSIONS ARE RIGHT!" << endl;
         }
     }
 }
