@@ -1,69 +1,78 @@
 #include <iostream>
 #include <vector>
+#include <cassert>
 #include "base.h"
 
 void interpretFunction(std::vector<BCFunction*> functionArray, int name) {
     long int *regs = new long int[functionArray[name]->regsNumber];
     int i = 0;
     while (true) {
+        if(i >= functionArray[name]->commands.size()){
+            std::cout << "Command vector: out of bounds error" << std::endl;
+            assert(false);
+        }
         BCCommand command = functionArray[name]->commands[i];
-        int resReg = command.result;
-        int arg0Reg = command.arg0;
-        int arg1Reg = command.arg1;
+        int res = command.result;
+        int arg0 = command.arg0;
+        int arg1 = command.arg1;
         switch (command.type) {
             case IADD:
-                regs[resReg] = regs[arg0Reg] + regs[arg1Reg];
+                regs[res] = regs[arg0] + regs[arg1];
                 break;
             case ISUB:
-                regs[resReg] = regs[arg0Reg] - regs[arg1Reg];
+                regs[res] = regs[arg0] - regs[arg1];
                 break;
             case IMUL:
-                regs[resReg] = regs[arg0Reg] * regs[arg1Reg];
+                regs[res] = regs[arg0] * regs[arg1];
                 break;
             case IDIV:
-                regs[resReg] = regs[arg0Reg] / regs[arg1Reg];
+                regs[res] = regs[arg0] / regs[arg1];
                 break;
             case IMOD:
-                regs[resReg] = regs[arg0Reg] % regs[arg1Reg];
+                regs[res] = regs[arg0] % regs[arg1];
                 break;
             case LAND:
-                regs[resReg] = (bool)regs[arg0Reg] && (bool)regs[arg1Reg];
+                regs[res] = (bool)regs[arg0] && (bool)regs[arg1];
                 break;
             case LOR:
-                regs[resReg] = (bool)regs[arg0Reg] || (bool)regs[arg1Reg];
+                regs[res] = (bool)regs[arg0] || (bool)regs[arg1];
                 break;
             case LNOT:
-                regs[resReg] = !(bool)regs[arg0Reg];
+                regs[res] = !(bool)regs[arg0];
                 break;
             case IMOV:
-                regs[resReg] = regs[arg0Reg];
+                regs[res] = regs[arg0];
                 break;
             case ILOAD:
-                regs[resReg] = arg0Reg;
+                regs[res] = arg0;
                 break;
             case ICMPEQ:
-                regs[resReg] = (regs[arg0Reg] == regs[arg1Reg]);
+                regs[res] = (regs[arg0] == regs[arg1]);
                 break;
             case ICMPLS:
-                regs[arg0Reg] < regs[arg1Reg] ? regs[resReg] = 1 : regs[resReg] = 0;
+                regs[res] = (regs[arg0] < regs[arg1]);
                 break;
             case GOTO:
-                i = arg0Reg - 1;
+                i = arg0 - 1;
                 break;
             case IF:
-                if(regs[arg0Reg] != 0) i = arg1Reg - 1;
+                if(regs[arg0] != 0) i = arg1 - 1;
                 break;
             case RET:
                 delete [] regs;
                 return;
             case IWRITE:
-                std::cout << regs[arg0Reg] << std::endl;
+                std::cout << regs[arg0] << std::endl;
                 break;
             case IREAD:
-                std::cin >> regs[resReg];
+                std::cin >> regs[res];
                 break;
             case CALL:
-                interpretFunction(functionArray, arg0Reg);
+                interpretFunction(functionArray, arg0);
+                break;
+            default :
+                std::cout << "Unknown operator: " << command.type << std::endl;
+                assert(false);
                 break;
         }
         i++;
