@@ -2,76 +2,72 @@
 #include <vector>
 #include "base.h"
 
-Bytecode* readBytecode(std::string fileName);
-
-
 void interpretFunction(std::vector<BCFunction*> functionArray, int name) {
-    long int *regArray = new long int[functionArray[name]->regsNumber];
-    for(int i = 0; i < functionArray[name]->regsNumber; i++) regArray[i] = 0;
-
-    for (int i = 0; i < functionArray[name]->commands.size(); i++) {
+    long int *regs = new long int[functionArray[name]->regsNumber];
+    int i = 0;
+    while (true) {
         BCCommand command = functionArray[name]->commands[i];
         int resReg = command.result;
         int arg0Reg = command.arg0;
         int arg1Reg = command.arg1;
         switch (command.type) {
             case IADD:
-                regArray[resReg] = regArray[arg0Reg] + regArray[arg1Reg];
+                regs[resReg] = regs[arg0Reg] + regs[arg1Reg];
                 break;
             case ISUB:
-                regArray[resReg] = regArray[arg0Reg] - regArray[arg1Reg];
+                regs[resReg] = regs[arg0Reg] - regs[arg1Reg];
                 break;
             case IMUL:
-                regArray[resReg] = regArray[arg0Reg] * regArray[arg1Reg];
+                regs[resReg] = regs[arg0Reg] * regs[arg1Reg];
                 break;
             case IDIV:
-                regArray[resReg] = regArray[arg0Reg] / regArray[arg1Reg];
+                regs[resReg] = regs[arg0Reg] / regs[arg1Reg];
                 break;
             case IMOD:
-                regArray[resReg] = regArray[arg0Reg] % regArray[arg1Reg];
+                regs[resReg] = regs[arg0Reg] % regs[arg1Reg];
                 break;
             case LAND:
-                regArray[resReg] = (bool)regArray[arg0Reg] && (bool)regArray[arg1Reg];
+                regs[resReg] = (bool)regs[arg0Reg] && (bool)regs[arg1Reg];
                 break;
             case LOR:
-                regArray[resReg] = (bool)regArray[arg0Reg] || (bool)regArray[arg1Reg];
+                regs[resReg] = (bool)regs[arg0Reg] || (bool)regs[arg1Reg];
                 break;
             case LNOT:
-                regArray[resReg] = !(bool)regArray[arg0Reg];
+                regs[resReg] = !(bool)regs[arg0Reg];
                 break;
             case IMOV:
-                regArray[resReg] = regArray[arg0Reg];
+                regs[resReg] = regs[arg0Reg];
                 break;
             case ILOAD:
-                regArray[resReg] = arg0Reg;
+                regs[resReg] = arg0Reg;
                 break;
             case ICMPEQ:
-                regArray[arg0Reg] == regArray[arg1Reg] ? regArray[resReg] = 1 : regArray[resReg] = 0;
+                regs[resReg] = (regs[arg0Reg] == regs[arg1Reg]);
                 break;
             case ICMPLS:
-                regArray[arg0Reg] < regArray[arg1Reg] ? regArray[resReg] = 1 : regArray[resReg] = 0;
+                regs[arg0Reg] < regs[arg1Reg] ? regs[resReg] = 1 : regs[resReg] = 0;
                 break;
             case GOTO:
-                i = resReg - 1;
-                continue;
+                i = arg0Reg - 1;
+                break;
             case IF:
-                if(regArray[arg0Reg] != 0) i = resReg - 1;
-                continue;
+                if(regs[arg0Reg] != 0) i = arg1Reg - 1;
+                break;
             case RET:
-                delete [] regArray;
+                delete [] regs;
                 return;
             case IWRITE:
-                std::cout << regArray[arg0Reg] << std::endl;
+                std::cout << regs[arg0Reg] << std::endl;
                 break;
             case IREAD:
-                std::cin >> regArray[resReg];
+                std::cin >> regs[resReg];
                 break;
             case CALL:
                 interpretFunction(functionArray, arg0Reg);
                 break;
         }
+        i++;
     }
-    delete [] regArray;
 }
 
 void interpret(Bytecode* bytecode) {
@@ -113,8 +109,8 @@ int main() {
 
     testCom[6].type = IF;
     testCom[6].arg0 = 4;
-    testCom[6].arg1 = 0;
-    testCom[6].result = 12;
+    testCom[6].arg1 = 12;
+    testCom[6].result = 0;
 
     testCom[7].type = IADD;
     testCom[7].arg0 = 2;
@@ -137,9 +133,9 @@ int main() {
     testCom[10].result = 1;
 
     testCom[11].type = GOTO;
-    testCom[11].arg0 = 0;
+    testCom[11].arg0 = 4;
     testCom[11].arg1 = 0;
-    testCom[11].result = 4;
+    testCom[11].result = 0;
 
     testCom[12].type = IWRITE;
     testCom[12].arg0 = 3;
@@ -157,21 +153,57 @@ int main() {
     testCom[14].result = 0;
 
 
-    std::vector<BCCommand> testCom2(3);
+    std::vector<BCCommand> testCom2(10);
     testCom2[0].type = ILOAD;
-    testCom2[0].arg0 = 404;
+    testCom2[0].arg0 = 200;
     testCom2[0].arg1 = 0;
     testCom2[0].result = 1;
 
-    testCom2[1].type = IWRITE;
-    testCom2[1].arg0 = 1;
+    testCom2[1].type = ILOAD;
+    testCom2[1].arg0 = 100;
     testCom2[1].arg1 = 0;
-    testCom2[1].result = 0;
+    testCom2[1].result = 2;
 
-    testCom2[2].type = RET;
-    testCom2[2].arg0 = 0;
-    testCom2[2].arg1 = 0;
-    testCom2[2].result = 0;
+    testCom2[2].type = IMUL;
+    testCom2[2].arg0 = 1;
+    testCom2[2].arg1 = 2;
+    testCom2[2].result = 3;
+
+    testCom2[3].type = IDIV;
+    testCom2[3].arg0 = 3;
+    testCom2[3].arg1 = 1;
+    testCom2[3].result = 4;
+
+    testCom2[4].type = IMOD;
+    testCom2[4].arg0 = 4;
+    testCom2[4].arg1 = 1;
+    testCom2[4].result = 5;
+
+    testCom2[5].type = ICMPEQ;
+    testCom2[5].arg0 = 5;
+    testCom2[5].arg1 = 2;
+    testCom2[5].result = 6;
+
+    testCom2[6].type = LOR;
+    testCom2[6].arg0 = 6;
+    testCom2[6].arg1 = 7;
+    testCom2[6].result = 8;
+
+    testCom2[7].type = LAND;
+    testCom2[7].arg0 = 8;
+    testCom2[7].arg1 = 6;
+    testCom2[7].result = 9;
+
+    testCom2[8].type = IWRITE;
+    testCom2[8].arg0 = 9;
+    testCom2[8].arg1 = 0;
+    testCom2[8].result = 0;
+
+    testCom2[9].type = RET;
+    testCom2[9].arg0 = 0;
+    testCom2[9].arg1 = 0;
+    testCom2[9].result = 0;
+
 
 
     BCFunction testFunction;
@@ -181,7 +213,7 @@ int main() {
 
     BCFunction testFunction2;
     testFunction2.name = "CALL_test";
-    testFunction2.regsNumber = 3;
+    testFunction2.regsNumber = 10;
     testFunction2.commands = testCom2;
 
     Bytecode testBC;
