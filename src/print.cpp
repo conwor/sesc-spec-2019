@@ -48,6 +48,7 @@ void printFunc(BCFunction *func, ostream& os) {
             break;
         }
     }
+    os << "RET" << endl;
 }
 
 void writeBytecode(Bytecode* bc, ostream& os) {

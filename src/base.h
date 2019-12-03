@@ -61,9 +61,21 @@ struct Expression {
         token.value = _val;
     }
 
+    virtual ~Expression(){
+    }
+
     Token token;
     Expression* lArg;
     Expression* rArg;
+};
+
+struct FunctionCall: public Expression{
+    FunctionCall() {};
+
+    FunctionCall(int nameIndex){
+        token.value = nameIndex;
+        token.type = TT_IDENT;
+    }
 };
 
 struct Operator {
@@ -72,7 +84,7 @@ struct Operator {
 };
 
 struct IfOperator: public Operator {
-    IfOperator() {}
+    IfOperator(){}
 
     IfOperator(Expression *_condition, std::vector<Operator*> *_then,
             std::vector<Operator*> *_else) {
@@ -86,7 +98,7 @@ struct IfOperator: public Operator {
 };
 
 struct WhileOperator: public Operator {
-    WhileOperator() {}
+    WhileOperator(){}
 
     WhileOperator(Expression *_condition, std::vector<Operator*> *_body){
         condition = _condition;
@@ -100,21 +112,21 @@ struct WhileOperator: public Operator {
 struct VarDefOperator: public Operator {
     VarDefOperator() {}
 
-    VarDefOperator(const std::string& _name) {
-        name = _name;
+    VarDefOperator(int _nameIndex) {
+        nameIndex = _nameIndex;
     }
 
-    std::string name;
+    int nameIndex;
 };
 
 struct AssignOperator: public Operator {
     AssignOperator() {}
 
-    AssignOperator(Expression *_expr, const std::string& _name) {
+    AssignOperator(Expression *_expr, int _nameIndex) {
         value = _expr;
-        variableName = _name;
+        variableNameIndex = _nameIndex;
     }
-    std::string variableName;
+    int variableNameIndex;
     Expression* value;
 };
 
@@ -129,16 +141,16 @@ struct Function {
     Function() {
     }
 
-    Function(const std::string& _name, Operator *_op){
-        name = _name;
+    Function(int _nameIndex, Operator *_op){
+        nameIndex = _nameIndex;
         body.push_back(_op);
     }
 
-    Function(const std::string& _name, const std::vector<Operator*>& _body) {
-        name = _name;
+    Function(int _nameIndex, const std::vector<Operator*>& _body) {
+        nameIndex = _nameIndex;
         body = _body;
     }
-    std::string name;
+    int nameIndex;
     std::vector<Operator*> body;
 };
 

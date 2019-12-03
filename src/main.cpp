@@ -8,6 +8,7 @@ int main(){
     TestWhile();
     TestMultiFunc();
     TestExpressionOp();
+    TestFunctionCall();
     return 0;
 }
 

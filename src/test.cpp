@@ -37,6 +37,7 @@ void TestAssign() {
         exp << "IADD 8 9 7" << endl;
         exp << "IMUL 2 7 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
 
         ostringstream out;
 
@@ -66,7 +67,7 @@ void TestAssign() {
         writeBytecode(&bc, out);
 
         if(out.str() != exp.str()){
-            cerr << "Wrong TEST at 56 line" << endl;
+            cerr << "Wrong TEST at 69 line test.cpp" << endl;
             throw system_error();
         }
 
@@ -82,17 +83,17 @@ void TestAssign() {
         Expression mul(&mul10, &sum112, TT_OPERATION, 2);
 
         VarDefOperator var;
-        var.name = "a";
+        var.nameIndex = 0;
 
         AssignOperator assign;
         assign.value = &mul;
-        assign.variableName = "a";
+        assign.variableNameIndex = 0;
 
 
         Function irFunc;
 
         irFunc.body = {&var, &assign};
-        irFunc.name = "main";
+        irFunc.nameIndex = 3;
 
         IR ir;
 
@@ -118,18 +119,19 @@ void TestAssign() {
         exp << "2" << endl;
         exp << "ILOAD 10 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
 
         VarDefOperator var;
-        var.name = "a";
+        var.nameIndex = 0;
 
         Expression ten = makeIntExpr(10);
 
         AssignOperator assign;
-        assign.variableName = "a";
+        assign.variableNameIndex = 0;
         assign.value = &ten;
 
         Function func;
-        func.name = "main";
+        func.nameIndex = 3;
         func.body = {&var, &assign};
 
         IR ir;
@@ -156,9 +158,11 @@ void TestAssign() {
         exp << "ILOAD 3 2" << endl;
         exp << "IMUL 1 2 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
+
         ostringstream out;
 
-        VarDefOperator var("a");
+        VarDefOperator var(0);
 
         Expression three = makeIntExpr(3);
 
@@ -166,9 +170,9 @@ void TestAssign() {
 
         Expression mul3a(&varA, &three, TT_OPERATION, 2);
 
-        AssignOperator assign(&mul3a, "a");
+        AssignOperator assign(&mul3a, 0);
 
-        Function func("main", {&var, &assign});
+        Function func(3, {&var, &assign});
 
         IR ir(&func);
 
@@ -193,15 +197,16 @@ void TestAssign() {
         exp << "2" << endl;
         exp << "IMOV 0 2" << endl;
         exp << "IMOV 2 1" << endl;
+        exp << "RET" << endl;
 
-        VarDefOperator varA("a");
-        VarDefOperator varB("b");
+        VarDefOperator varA(0);
+        VarDefOperator varB(1);
 
         Expression var = makeVarExpr(0);
 
-        AssignOperator assign(&var, "b");
+        AssignOperator assign(&var, 1);
 
-        Function func("main", {&varA, &varB, &assign});
+        Function func(3, {&varA, &varB, &assign});
 
         IR ir(&func);
 
@@ -230,9 +235,10 @@ void TestAssign() {
         exp << "IADD 5 6 4" << endl;
         exp << "IMUL 3 4 2" << endl;
         exp << "IMOV 2 1" << endl;
+        exp << "RET" << endl;
 
-        VarDefOperator varA("a");
-        VarDefOperator varB("b");
+        VarDefOperator varA(0);
+        VarDefOperator varB(1);
 
         Expression var0 = makeVarExpr(0);
         Expression var1 = makeVarExpr(1);
@@ -243,9 +249,9 @@ void TestAssign() {
         Expression sumBA3(&sumBA, &three, TT_OPERATION, 0);
         Expression mul3BA3(&three, &sumBA3, TT_OPERATION, 2);
 
-        AssignOperator assign(&mul3BA3, "b");
+        AssignOperator assign(&mul3BA3, 1);
 
-        Function func("main", {&varA, &varB, &assign});
+        Function func(3, {&varA, &varB, &assign});
 
         IR ir(&func);
 
@@ -294,6 +300,7 @@ void TestIf(){
         exp << "LOR 13 17 12" << endl;
         exp << "LAND 2 12 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
         Expression two = makeIntExpr(2);
@@ -310,11 +317,11 @@ void TestIf(){
 
         Expression And(&firstAnd, &Or, TT_OPERATION, 12);
 
-        VarDefOperator var("a");
+        VarDefOperator var(0);
 
-        AssignOperator assign(&And, "a");
+        AssignOperator assign(&And, 0);
 
-        Function func("main", {&var, &assign});
+        Function func(3, {&var, &assign});
 
         IR ir;
         ir.functions = {&func};
@@ -343,18 +350,18 @@ void TestIf(){
         exp << "ICMPEQ 2 3 4" << endl;
         exp << "LNOT 4 1" << endl;
         exp << "IMOV 1 0" << endl;
-
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(0);
         Expression two = makeIntExpr(2);
 
         Expression notEq(&one, &two, TT_OPERATION, 7);
 
-        VarDefOperator var("a");
+        VarDefOperator var(0);
 
-        AssignOperator assign(&notEq, "a");
+        AssignOperator assign(&notEq, 0);
 
-        Function func("main", {&var, &assign});
+        Function func(3, {&var, &assign});
 
         IR ir(&func);
 
@@ -383,6 +390,7 @@ void TestIf(){
         exp << "ICMPEQ 6 7 5" << endl;
         exp << "LAND 2 5 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
         Expression zero = makeIntExpr(0);
@@ -392,11 +400,11 @@ void TestIf(){
 
         Expression andEq(&eq10, &eq00, TT_OPERATION, 12);
 
-        VarDefOperator var("a");
+        VarDefOperator var(0);
 
-        AssignOperator assign(&andEq, "a");
+        AssignOperator assign(&andEq, 0);
 
-        Function func("main", {&var, &assign});
+        Function func(3, {&var, &assign});
 
         IR ir;
         ir.functions = {&func};
@@ -415,6 +423,7 @@ void TestIf(){
     }
     {
         ostringstream exp;
+
         exp << "1" << endl;
         exp << "main" << endl;
         exp << "8" << endl;
@@ -430,15 +439,15 @@ void TestIf(){
         exp << "GOTO 11" << endl;
         exp << "ILOAD 1 7" << endl;
         exp << "IMOV 7 0" << endl;
-
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
         Expression two = makeIntExpr(2);
         Expression three = makeIntExpr(3);
 
-        VarDefOperator var("a");
-        AssignOperator assignThen(&one, "a");
-        AssignOperator assignElse(&two, "a");
+        VarDefOperator var(0);
+        AssignOperator assignThen(&one, 0);
+        AssignOperator assignElse(&two, 0);
 
         Expression sum12(&one, &two, TT_OPERATION, 0);
         Expression eq3(&sum12, &three, TT_OPERATION, 6);
@@ -447,7 +456,7 @@ void TestIf(){
         ifOp.condition = &eq3;
         ifOp.thenPart.push_back(&assignThen);
         ifOp.elsePart.push_back(&assignElse);
-        Function func("main", {&var, &ifOp});
+        Function func(3, {&var, &ifOp});
 
         IR ir;
         ir.functions = {&func};
@@ -484,6 +493,8 @@ void TestWhile(){
         exp << "IADD 8 9 7" << endl;
         exp << "IMOV 7 0" << endl;
         exp << "GOTO 2" << endl;
+        exp << "RET" << endl;
+
         stringstream out;
 
 
@@ -494,15 +505,15 @@ void TestWhile(){
         Expression sum19(&one, &nine, TT_OPERATION, 0);
         Expression eq10(&sum19, &ten, TT_OPERATION, 6);
 
-        VarDefOperator var("a");
+        VarDefOperator var(0);
 
-        AssignOperator assign0(&one, "a");
+        AssignOperator assign0(&one, 0);
 
-        AssignOperator assign1(&sum19, "a");
+        AssignOperator assign1(&sum19, 0);
         WhileOperator whileOp;
         whileOp.condition = &eq10;
         whileOp.body.push_back(&assign1);
-        Function func("main", {&var, &assign0, &whileOp});
+        Function func(3, {&var, &assign0, &whileOp});
 
         IR ir(&func);
 
@@ -532,6 +543,7 @@ void TestMultiFunc(){
         exp << "ILOAD 2 3" << endl;
         exp << "IADD 2 3 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
         exp << "baz" << endl;
         exp << "4" << endl;
         exp << "4" << endl;
@@ -539,6 +551,7 @@ void TestMultiFunc(){
         exp << "ILOAD 1 3" << endl;
         exp << "ISUB 2 3 1" << endl;
         exp << "IMOV 1 0" << endl;
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
         Expression two = makeIntExpr(2);
@@ -546,14 +559,14 @@ void TestMultiFunc(){
         Expression sum12(&one, &two, TT_OPERATION, IADD);
         Expression sub21(&two, &one, TT_OPERATION, ISUB);
 
-        VarDefOperator var1("a");
-        VarDefOperator var2("a");
+        VarDefOperator var1(0);
+        VarDefOperator var2(0);
 
-        AssignOperator assign1(&sum12, "a");
-        AssignOperator assign2(&sub21, "a");
+        AssignOperator assign1(&sum12, 0);
+        AssignOperator assign2(&sub21, 0);
 
-        Function func1("foo", {&var1, &assign1});
-        Function func2("baz", {&var2, &assign2});
+        Function func1(4, {&var1, &assign1});
+        Function func2(5, {&var2, &assign2});
 
         IR ir({&func1, &func2});
 
@@ -582,6 +595,7 @@ void TestExpressionOp(){
         exp << "ILOAD 1 1" << endl;
         exp << "ILOAD 2 2" << endl;
         exp << "IMUL 1 2 0" << endl;
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
         Expression two = makeIntExpr(2);
@@ -590,7 +604,7 @@ void TestExpressionOp(){
 
         ExpressionOperator expr(&mul12);
 
-        Function func("main", &expr);
+        Function func(3, &expr);
 
         IR ir(&func);
 
@@ -614,13 +628,13 @@ void TestExpressionOp(){
         exp << "1" << endl;
         exp << "1" << endl;
         exp << "ILOAD 1 0" << endl;
-
+        exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
 
         ExpressionOperator exprOp(&one);
 
-        Function func("main", &exprOp);
+        Function func(3, &exprOp);
 
         IR ir(&func);
 
@@ -633,6 +647,62 @@ void TestExpressionOp(){
             throw system_error();
         } else{
             cerr << "SIMPLE EXPRESSIONS ARE RIGHT!" << endl;
+        }
+    }
+}
+
+void TestFunctionCall(){
+    {
+        ostringstream exp;
+        ostringstream out;
+
+        exp << "2" << endl;
+        exp << "baz" << endl;
+        exp << "4" << endl;
+        exp << "4" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "IADD 1 2 0" << endl;
+        exp << "CALL 1" << endl;
+        exp << "RET" << endl;
+        exp << "foo" << endl;
+        exp << "4" << endl;
+        exp << "4" << endl;
+        exp << "ILOAD 2 1" << endl;
+        exp << "ILOAD 1 2" << endl;
+        exp << "ISUB 1 2 0" << endl;
+        exp << "CALL 0" << endl;
+        exp << "RET" << endl;
+
+        Expression one = makeIntExpr(1);
+        Expression two = makeIntExpr(2);
+
+        Expression sum12(&one, &two, TT_OPERATION, IADD);
+        Expression sub21(&two, &one, TT_OPERATION, ISUB);
+
+        ExpressionOperator sumOp(&sum12);
+        ExpressionOperator subOp(&sub21);
+
+        FunctionCall funcOne(4);
+        FunctionCall funcZero(5);
+
+        ExpressionOperator funcCallOne(&funcOne);
+        ExpressionOperator funcCallZero(&funcZero);
+
+        Function foo(5, {&sumOp, &funcCallOne});
+        Function baz(4, {&subOp, &funcCallZero});
+
+        IR ir({&foo, &baz});
+
+        Bytecode *bc = generateBytecode(&ir);
+
+        writeBytecode(bc, out);
+
+        if(out.str() != exp.str()){
+            cerr << "ERROR FUNCTIONCALL IS WRONG!" << endl;
+            throw system_error();
+        } else{
+            cerr << "FUNCTIONCALL IS RIGHT!" << endl;
         }
     }
 }

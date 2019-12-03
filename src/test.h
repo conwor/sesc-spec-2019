@@ -11,3 +11,5 @@ void TestWhile();
 void TestMultiFunc();
 
 void TestExpressionOp();
+
+void TestFunctionCall();

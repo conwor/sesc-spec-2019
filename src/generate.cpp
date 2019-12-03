@@ -4,6 +4,8 @@
 
 using namespace std;
 
+vector<string> indexToString = {"a", "b", "c", "main", "foo", "baz"};
+
 class regsInfo {
 public:
     int allocateRegister() {
@@ -11,13 +13,13 @@ public:
         return regsNumber - 1;
     }
 
-    void allocateVariable(string varName) {
-        nameToIndex[varName] = regsNumber;
+    void allocateVariable(int nameIndex) {
+        nameToIndex[indexToString[nameIndex]] = regsNumber;
         regsNumber++;
     }
 
-    int registerOf(string varName) {
-        return nameToIndex.at(varName);
+    int registerOf(int nameIndex) {
+        return nameToIndex.at(indexToString[nameIndex]);
     }
 
     int getRegsNum() {
@@ -28,13 +30,40 @@ private:
     map<string, int> nameToIndex;
 };
 
+class funcInfo {
+public:
+    int allocateFunc(int nameIndex) {
+        int size = nameToIndex.size();
+        nameToIndex[indexToString[nameIndex]] = size;
+        return size;
+    }
+
+    int numOf(int nameIndex){
+        return nameToIndex.at(indexToString.at(nameIndex));
+    }
+
+    int getFuncsNum(){
+        return nameToIndex.size();
+    }
+
+private:
+    map<string, int> nameToIndex;
+};
+
 /*
  * addExpression casts expressions like:
  * (3 + 123) * (12 * (37 - 12)) or (1 == 2) && (3 != 4) or (a + 2) * 10
  * in BCCommands like IADD, ILOAD or LAND
  */
 void addExpression(vector<BCCommand> *result, Expression *expr,
-        int commandResult, regsInfo *info) {
+        int commandResult, regsInfo *regsInformation, funcInfo *funcInformation) {
+    FunctionCall *funcPtr = dynamic_cast<FunctionCall*>(expr);
+    if(funcPtr != NULL){
+        BCCommand funcCall(funcInformation->numOf(funcPtr->token.value), BCCommandType::CALL);
+        result->push_back(funcCall);
+        return;
+    }
+
     int left, right;
     TokenType leftT, rightT;
 
@@ -44,6 +73,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
         result->push_back(ass);
         return;
     }
+
     case TT_LITERAL: {
         BCCommand load(expr->token.value, commandResult, BCCommandType::ILOAD);
         result->push_back(load);
@@ -58,7 +88,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
 
     switch (leftT) {
     case TT_LITERAL: {
-        left = info->allocateRegister();
+        left = regsInformation->allocateRegister();
         BCCommand lLoad(expr->lArg->token.value, left, BCCommandType::ILOAD);
         result->push_back(lLoad);
         break;
@@ -67,15 +97,15 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
         left = expr->lArg->token.value;
         break;
     case TT_OPERATION:
-        left = info->allocateRegister();
-        addExpression(result, expr->lArg, left, info);
+        left = regsInformation->allocateRegister();
+        addExpression(result, expr->lArg, left, regsInformation, funcInformation);
         break;
     }
 
     if (!(expr->token.value == LNOT && rightT == TT_OPERATION)) {
         switch (rightT) {
         case TT_LITERAL: {
-            right = info->allocateRegister();
+            right = regsInformation->allocateRegister();
             BCCommand rLoad(expr->rArg->token.value, right,
                     BCCommandType::ILOAD);
             result->push_back(rLoad);
@@ -85,8 +115,8 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
             right = expr->rArg->token.value;
             break;
         case TT_OPERATION:
-            right = info->allocateRegister();
-            addExpression(result, expr->rArg, right, info);
+            right = regsInformation->allocateRegister();
+            addExpression(result, expr->rArg, right, regsInformation, funcInformation);
             break;
         }
     }
@@ -127,11 +157,11 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case BG: {
         comType = BCCommandType::LAND;
 
-        int less = info->allocateRegister();
+        int less = regsInformation->allocateRegister();
 
-        int eq = info->allocateRegister();
+        int eq = regsInformation->allocateRegister();
 
-        int notEq = info->allocateRegister();
+        int notEq = regsInformation->allocateRegister();
 
         BCCommand lessCom(left, right, less, ICMPLS);
         result->push_back(lessCom);
@@ -150,7 +180,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case BG_EQ: {
         comType = BCCommandType::LNOT;
 
-        int less = info->allocateRegister();
+        int less = regsInformation->allocateRegister();
 
         BCCommand lessCom(left, right, less, ICMPLS);
         result->push_back(lessCom);
@@ -161,7 +191,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case NE: {
         comType = BCCommandType::LNOT;
 
-        int eq = info->allocateRegister();
+        int eq = regsInformation->allocateRegister();
 
         BCCommand eqCom(left, right, eq, ICMPEQ);
         result->push_back(eqCom);
@@ -191,20 +221,19 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
 }
 
 vector<BCCommand> generateCommands(vector<Operator*> *operators,
-        regsInfo *info) {
+        regsInfo *regsInformation, funcInfo *funcInformation) {
     vector<BCCommand> result;
     for (auto _operator : *operators) {
-
         //ASSIGN
         AssignOperator* asPtr = dynamic_cast<AssignOperator*>(_operator);
         if (asPtr != NULL) {
             BCCommand assign;
 
-            assign.result = info->registerOf(asPtr->variableName);
+            assign.result = regsInformation->registerOf(asPtr->variableNameIndex);
             assign.type = BCCommandType::IMOV;
 
-            int commandResult = info->allocateRegister();
-            addExpression(&result, asPtr->value, commandResult, info);
+            int commandResult = regsInformation->allocateRegister();
+            addExpression(&result, asPtr->value, commandResult, regsInformation, funcInformation);
             assign.arg0 = commandResult;
 
             result.push_back(assign);
@@ -213,7 +242,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
         //VARDEF
         VarDefOperator* varPtr = dynamic_cast<VarDefOperator*>(_operator);
         if (varPtr != NULL) {
-            info->allocateVariable(varPtr->name);
+            regsInformation->allocateVariable(varPtr->nameIndex);
         }
 
         /*
@@ -225,15 +254,15 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
          */
         IfOperator *ifPtr = dynamic_cast<IfOperator*>(_operator);
         if (ifPtr != NULL) {
-            int commandResult = info->allocateRegister();
+            int commandResult = regsInformation->allocateRegister();
 
-            addExpression(&result, ifPtr->condition, commandResult, info);
+            addExpression(&result, ifPtr->condition, commandResult, regsInformation, funcInformation);
 
             BCCommand ifCom;
             ifCom.arg0 = commandResult;
 
             vector<BCCommand> elsePart = generateCommands(&(ifPtr->elsePart),
-                    info);
+                    regsInformation, funcInformation);
 
             ifCom.result = result.size() + 2 + elsePart.size();
             ifCom.type = BCCommandType::IF;
@@ -245,7 +274,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
             }
 
             vector<BCCommand> thenPart = generateCommands(&(ifPtr->thenPart),
-                    info);
+                    regsInformation, funcInformation);
 
             BCCommand gotoEndOfThen;
             gotoEndOfThen.result = result.size() + 1 + thenPart.size();
@@ -268,13 +297,13 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
          */
         WhileOperator *whilePtr = dynamic_cast<WhileOperator*>(_operator);
         if (whilePtr != NULL) {
-            int commandResult = info->allocateRegister();
+            int commandResult = regsInformation->allocateRegister();
 
             BCCommand gotoIf(result.size(), GOTO);
 
-            addExpression(&result, whilePtr->condition, commandResult, info);
+            addExpression(&result, whilePtr->condition, commandResult, regsInformation, funcInformation);
 
-            vector<BCCommand> cmds = generateCommands(&(whilePtr->body), info);
+            vector<BCCommand> cmds = generateCommands(&(whilePtr->body), regsInformation, funcInformation);
 
             BCCommand ifCom(commandResult, result.size() + cmds.size() + 2, IF);
 
@@ -287,34 +316,36 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
             result.push_back(gotoIf);
         }
 
-        ExpressionOperator *exprPtr =
-                dynamic_cast<ExpressionOperator*>(_operator);
+        //Expressions
+        ExpressionOperator *exprPtr = dynamic_cast<ExpressionOperator*>(_operator);
         if (exprPtr != NULL) {
-            int commandResult = info->allocateRegister();
+            int commandResult = regsInformation->allocateRegister();
 
-            addExpression(&result, exprPtr->expr, commandResult, info);
+            addExpression(&result, exprPtr->expr, commandResult, regsInformation, funcInformation);
         }
 
     }
     return result;
 }
 
-BCFunction *generateFunction(Function *func) {
-    regsInfo info;
+BCFunction *generateFunction(Function *func, funcInfo *funcInformation) {
+    regsInfo regsInformation;
 
     BCFunction *result = new BCFunction;
-
-    result->name = func->name;
-    result->commands = generateCommands(&(func->body), &info);
-    result->regsNumber = info.getRegsNum();
-
+    result->name = indexToString[func->nameIndex];
+    result->commands = generateCommands(&(func->body), &regsInformation, funcInformation);
+    result->regsNumber = regsInformation.getRegsNum();
     return result;
 }
 
 Bytecode* generateBytecode(IR* ir) {
     Bytecode *result = new Bytecode;
+    funcInfo funcInformation;
+    for(auto *function : ir->functions){
+        funcInformation.allocateFunc(function->nameIndex);
+    }
     for (auto *function : ir->functions) {
-        BCFunction *func = generateFunction(function);
+        BCFunction *func = generateFunction(function, &funcInformation);
         result->functions.push_back(func);
     }
     return result;
