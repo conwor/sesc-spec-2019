@@ -65,11 +65,11 @@ struct WhileOperator : public Operator {
 };
 
 struct VarDefOperator : public Operator {
-    std::string name;
+     int name;
 };
 
 struct AssignOperator : public Operator {
-    std::string name;
+    int name;
     Expression* value;
 };
 
@@ -78,7 +78,8 @@ struct ExpressionOperator : public Operator {
 };
 
 struct Function {
-    std::string name;
+    int name;
+    bool isMain = false;
     std::vector<Operator*> body;
 };
 
