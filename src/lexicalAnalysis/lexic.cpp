@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include <bits/stdc++.h>
+#include <map>
 #include <fstream>
 #include <regex>
 
@@ -23,113 +23,152 @@ using namespace std;
  *
  */
 
-map<string, int, int > StringToToken{
+map<string, pair<TokenType,int>> stringToToken{
 
-    //TokenType : Keyword
-        {"void", TT_KEYWORD, KW_VOID},
-        {"int", TT_KEYWORD, KW_INT},
-        {"if", TT_KEYWORD, KW_IF},
-        {"else", TT_KEYWORD, KW_ELSE},
-        {"while", TT_KEYWORD, KW_WHILE},
-        {"return", TT_KEYWORD, KW_RETURN},
+        //TokenType : Keyword
+        {"void", pair<TokenType, int>(TT_KEYWORD, KW_VOID)},
+        {"int", pair<TokenType, int>(TT_KEYWORD, KW_INT)},
+        {"if", pair<TokenType, int>(TT_KEYWORD, KW_IF)},
+        {"else", pair<TokenType, int>(TT_KEYWORD, KW_ELSE)},
+        {"while", pair<TokenType, int>(TT_KEYWORD, KW_WHILE)},
+        {"return", pair<TokenType, int>(TT_KEYWORD, KW_RETURN)},
 
-    // TokenType : Operation
-        {"+", TT_OPERATION, ADD},
-        {"-", TT_OPERATION, SUB},
-        {"*", TT_OPERATION, MUL},
-        {"/", TT_OPERATION, DIV},
-        {"%", TT_OPERATION, MOD},
+        {"+", pair<TokenType, int>(TT_OPERATION, ADD)},
+        {"-", pair<TokenType, int>(TT_OPERATION, SUB)},
+        {"*", pair<TokenType, int>(TT_OPERATION, MUL)},
+        {"/", pair<TokenType, int>(TT_OPERATION, DIV)},
+        {"%", pair<TokenType, int>(TT_OPERATION, MOD)},
 
-        {"=", TT_OPERATION, ASSIGN},
-        {"==", TT_OPERATION, EQ},
-        {"!=", TT_OPERATION, NE},
-        {"<", TT_OPERATION, LS},
-        {">", TT_OPERATION, BG},
-        {"<=", TT_OPERATION, LS_EQ},
-        {">=", TT_OPERATION, BG_EQ},
-        {"&&", TT_OPERATION, AND},
-        {"||", TT_OPERATION, OR},
-        {"!", TT_OPERATION, NOT},
+        {"=", pair<TokenType, int>(TT_OPERATION, ASSIGN)},
 
-        {"{", TT_OPERATION, OPEN_BRACE},
-        {"}", TT_OPERATION, CLOSE_BRACE},
-        {"(", TT_OPERATION, OPEN_PARENTHESE},
-        {")", TT_OPERATION, CLOSE_PARENTHESE},
+        {"==", pair<TokenType, int>(TT_OPERATION, EQ)},
+        {"!=", pair<TokenType, int>(TT_OPERATION, NE)},
+        {"<", pair<TokenType, int>(TT_OPERATION, LS)},
+        {">", pair<TokenType, int>(TT_OPERATION, BG)},
+        {"<=", pair<TokenType, int>(TT_OPERATION, LS_EQ)},
+        {">=", pair<TokenType, int>(TT_OPERATION, BG_EQ)},
+        {"!", pair<TokenType, int>(TT_OPERATION, NOT)},
+        {"&&", pair<TokenType, int>(TT_OPERATION, AND)},
+        {"||", pair<TokenType, int>(TT_OPERATION, OR)},
 
-        {";", TT_OPERATION, SEMICOLON}
+        {";", pair<TokenType, int>(TT_OPERATION, SEMICOLON)},
+        {"{", pair<TokenType, int>(TT_OPERATION, OPEN_BRACE)},
+        {"}", pair<TokenType, int>(TT_OPERATION, CLOSE_BRACE)},
+        {"(", pair<TokenType, int>(TT_OPERATION, OPEN_PARENTHESE)},
+        {")", pair<TokenType, int>(TT_OPERATION, CLOSE_PARENTHESE)}
+
 };
 
-string ReadFile(string fileName) {
+string readFile(string fileName) {
     char chr;
     ifstream file;
     string output;
 
     file.open(fileName);
 
-    if( !file.is_open() ) {
-        string error;
-        error = "No such file";
-        throw error;
-    }
+    if( !file.is_open() )
+        throw "No such file";
+
     for(chr = file.get(); !file.eof(); chr = file.get() ){
         output += chr;
     }
     return output;
 }
 
-vector<Token> makeTokens(string& text) {
+vector<Token> makeTokens(string text) {
     vector<Token> output;
 
-    int i = -1; // char counter;
+    int i = 0; // char counter;
     int line_counter = 0;
-
-    int curtype = -1;
+    int column_counter = 0;
+    
+    int identificator_index = 0;
+    
+    TokenType curtype = TT_INVALID;
     string cursubstring; // current substring
 
-    regex literal_regex ("[0..9]*");
-    regex identkeyword_regex("a..zA..Z_[a..zA..Z_0..9]*");
-    regex operation_regex ("[+-=*/%&|{}()!;]*");
+    regex space_regex("[ \f\n\r\t\v]*");
+    regex literal_regex ("[0-9]*");
+    regex identkeyword_regex("[a-zA-Z_][a-zA-Z_0-9]*");
+    regex operation_regex ("[+=*/%&|{}()!;]*");
 
-    Token *token;
+    Token token{};
 
-    while(i++ < text.length()) { // main cycle
-        if (text[i] == '\n') line_counter++;
-        if (isspace(text[i])) continue;
+    while(i < text.length()) { // main cycle
+        column_counter++;
+        if (text[i] == '\n') {
+            line_counter++;
+            column_counter = 0;
+        }
 
-               // if it's literal
-        if (regex_match(cursubstring + to_string(i), literal_regex)) {
+        cout << endl << cursubstring;
+
+            // if it's a sequence of spaces
+        if (regex_match(cursubstring + text[i], space_regex)){
+            i++;
+            continue;
+        } else // if it's literal
+        if (regex_match(cursubstring + text[i], literal_regex)) {
 
             curtype = TT_LITERAL;
-            cursubstring += to_string(i);
+            cursubstring += text[i];
 
         } else // if it's identificator or a keyword
-        if (regex_match(cursubstring + to_string(i), identkeyword_regex)) {
+        if (regex_match(cursubstring + text[i], identkeyword_regex)) {
 
             curtype = TT_IDENT; // might be a keyword;
-            cursubstring += to_string(i);
+            cursubstring += text[i];
 
         } else // if it's operation
-        if (regex_match(cursubstring + to_string(i), operation_regex)) {
+        if (regex_match(cursubstring + text[i], operation_regex)) {
 
             curtype = TT_OPERATION;
-            cursubstring += to_string(i);
+            cursubstring += text[i];
 
-        } else {// then it's the end of lexeme
+        } else
+        {// then it's the end of lexeme
+            token.line = line_counter;
+            token.column = column_counter;
             switch (curtype){
                 case TT_LITERAL:
-                    token = new Token();
-                    token->type = TT_LITERAL;
-                    token->value = stoi(cursubstring);
+
+                    token.type = TT_LITERAL;
+                    token.value = stoi(cursubstring);
+
                     break;
                 case TT_OPERATION:
-                    token = new Token();
-                    token->type = TT_OPERATION;
-                    token->value = StringToToken(cursubstring);
+
+                    token.type = TT_OPERATION;
+
+                    token.value = stringToToken[cursubstring].second;
+
+                    break;
+                case TT_IDENT: // or TT_KEYWORD
+
+                    if( stringToToken.find(cursubstring) != stringToToken.end() ){
+                        token.type = stringToToken[cursubstring].first;
+                        token.value = stringToToken[cursubstring].second;
+                    } else {
+                        stringToToken[cursubstring] = make_pair(TT_IDENT, identificator_index);
+                        token.type = TT_IDENT;
+                        token.value = identificator_index;
+                        identificator_index++;
+                    }
+
+                    break;
+                case TT_INVALID:
+                    throw "LEXICAL ANALYSER ERROR:\n Invalid TokenType on row "+to_string(line_counter)+", col "+to_string(column_counter)+" : "+cursubstring+", "+text[i];
                     break;
                 default:
                     break;
             }
+            cursubstring = "";
+            curtype = TT_INVALID;
+            output.push_back(token);
+            continue; // remember the char after our curstring?
         }
+
+        i++;
 
     }
 

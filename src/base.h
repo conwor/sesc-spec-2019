@@ -12,7 +12,7 @@
 // Lexical analysis structures
 
 enum TokenType {
-    TT_LITERAL, TT_IDENT, TT_KEYWORD, TT_OPERATION
+    TT_INVALID, TT_LITERAL, TT_IDENT, TT_KEYWORD, TT_OPERATION
 };
 
 enum KeyWordType {
@@ -20,11 +20,11 @@ enum KeyWordType {
 };
 
 enum OperatorType {
-    ADD, SUB, MUL, DIV, MOD,
-    ASSIGN,
-    EQ, NE, LS, BG, LS_EQ, BG_EQ, AND, OR, NOT,
-    OPEN_BRACE, CLOSE_BRACE, OPEN_PARENTHESE, CLOSE_PARENTHESE,
-    SEMICOLON
+    ADD, SUB, MUL, DIV, MOD, // 0, 1, 2, 3, 4
+    ASSIGN, // 5
+    EQ, NE, LS, BG, LS_EQ, BG_EQ, AND, OR, NOT, // 6, 7, 8, 9, 10, 11, 12, 13, 14
+    OPEN_BRACE, CLOSE_BRACE, OPEN_PARENTHESE, CLOSE_PARENTHESE, // 15, 16, 17, 18
+    SEMICOLON // 19
 };
 
 struct Token {
@@ -36,6 +36,8 @@ struct Token {
 
     // based on token type, either value of literal or enumeration value or number from idents table
     int value;
+
+    friend std::ostream& operator <<(std::ostream& out, const Token &tk);
 };
 
 

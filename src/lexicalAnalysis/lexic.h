@@ -6,10 +6,7 @@
 
 #include "../base.h"
 
-#ifndef SESC_SPEC_2019_LEXIC_H
-    #define SESC_SPEC_2019_LEXIC_H
+#pragma once
 
-    std::string ReadFile( std::string fileName );
-    std::vector<Token> makeTokens( std::string text );
-
-#endif //SESC_SPEC_2019_LEXIC_H
+std::string readFile(std::string fileName);
+std::vector<Token> makeTokens(std::string text);
