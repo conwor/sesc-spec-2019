@@ -5,8 +5,6 @@
 #include <iostream>
 #include "lexic.h"
 
-#include <bits/stdc++.h>
-
 using namespace std;
 
 ostream& operator<< (ostream& out, const Token& tk){

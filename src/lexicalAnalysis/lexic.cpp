@@ -90,9 +90,9 @@ vector<Token> makeTokens(string text) {
     regex space_regex("[ \f\n\r\t\v]*");
     regex literal_regex ("[0-9]*");
     regex identkeyword_regex("[a-zA-Z_][a-zA-Z_0-9]*");
-    regex operation_regex ("[+=*/%&|{}()!;]*");
+    regex operation_regex (R"((\+|\*|\{|}|\(|\)|\|\||;|&&|-|/|%|!|=|==|<=|<|>|>=|!=))"); // [+=*/%&|{}()!;]*
 
-    Token token{};
+
 
     while(i < text.length()) { // main cycle
         column_counter++;
@@ -127,6 +127,7 @@ vector<Token> makeTokens(string text) {
 
         } else
         {// then it's the end of lexeme
+            Token token{};
             token.line = line_counter;
             token.column = column_counter;
             switch (curtype){
