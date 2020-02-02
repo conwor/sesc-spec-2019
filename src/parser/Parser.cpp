@@ -7,30 +7,33 @@
 #include <iostream>
 
 using namespace std;
+
 IR parseProgram(vector<Token> tokens) {
-    parseFunction(tokens);
+    while (!tokens.empty()) {
+        parseFunction(tokens);
+    }
 }
 
-Function parseFunction(vector<Token> tokens) {
+Function* parseFunction(vector<Token> tokens) {
     Function* function = new Function();
-    string name;
+    int name;
 
     readFunctionType(tokens);
-    readFunctionName(tokens);
+    name = readFunctionName(tokens);
 
     skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
 
-    // readParameters(tokens);
+    //readParameters(tokens);
 
     skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
 
-    skipToken(TT_OPERATION, OPEN_BRACE, tokens);
+    vector<Operator*> body = parseBody(tokens);
 
-    //parseBody(tokens);
+    function->name = name;
+    function->body = body;
+    if (name == -1) function->isMain = true; // main number
 
-    skipToken(TT_OPERATION, CLOSE_BRACE, tokens);
-
-    return *function;
+    return function;
 }
 
 vector<Operator*> parseBody(vector<Token> tokens) {
@@ -38,7 +41,7 @@ vector<Operator*> parseBody(vector<Token> tokens) {
 
     skipToken(TT_OPERATION, OPEN_BRACE, tokens);
 
-    while (tokens.front().type != TT_OPERATION && tokens.front().value != CLOSE_BRACE) {
+    while (nextToken(TT_OPERATION, CLOSE_BRACE, tokens)) {
         body.push_back(parseOperator(tokens));
     }
 
@@ -46,32 +49,20 @@ vector<Operator*> parseBody(vector<Token> tokens) {
 }
 
 string readFunctionType(vector<Token> tokens) {
-    string returnType;
-
-    Token returnTypeToken = getToken(tokens);
-    if (returnTypeToken.type != TT_KEYWORD) { throw; }
-    switch (returnTypeToken.value) {
-        case KW_VOID :
-            returnType = "void";
-            break;
-        default:;
-            throw;
+    if (nextToken(TT_KEYWORD, KW_VOID, tokens)) {
+        skipToken(TT_KEYWORD, KW_VOID, tokens);
+        return "void";
     }
 
-    return returnType;
+    throw;
 }
 
-string readFunctionName(vector<Token> tokens) {
-    string name;
-
-    Token functionNameToken = getToken(tokens);
-    if (functionNameToken.type != TT_IDENT) {
-        throw;
+int readFunctionName(vector<Token> tokens) {
+    if (nextToken(TT_IDENT, tokens)) {
+        return getToken(tokens).type;
     }
 
-    name = functionNameToken.value;
-
-    return name;
+    throw;
 }
 
 Operator* parseOperator(vector<Token> tokens) {
@@ -82,7 +73,7 @@ Operator* parseOperator(vector<Token> tokens) {
                 case KW_IF : {
                     skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
 
-                    Expression ifCondition = parseExpression(tokens);
+                    Expression* ifCondition = parseExpression(tokens);
 
                     skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
 
@@ -112,25 +103,30 @@ Operator* parseOperator(vector<Token> tokens) {
                     }
                     break;
                 default:
-                    break;
-                    //throw an exception
+                    throw;
             }
             break;
         case TT_IDENT :
-            break;
         case TT_LITERAL:
-            break;
         case TT_OPERATION:
             break;
     }
 }
 
-Expression parseExpression(vector<Token> tokens) {
+Expression* parseExpression(vector<Token> tokens) {
 
 }
 
+bool nextToken(TokenType tokenType, int ttType, vector<Token> tokens) {
+    return tokens.at(0).type == tokenType && tokens.at(0).value == ttType;
+}
+
+bool nextToken(TokenType tokenType, vector<Token> tokens) {
+    return tokens.at(0).type == tokenType;
+}
+    
 void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
-    auto index = tokens.cbegin();
+    auto index = tokens.begin();
     if (tokens.at(0).type == tokenType && tokens.at(0).value == ttType) {
         tokens.erase(index);
     } else {
@@ -139,8 +135,8 @@ void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
 }
 
 Token getToken(vector<Token> tokens) {
-    Token token = tokens.front();
-    tokens.erase(tokens.cbegin());
+    Token token = tokens.at(0);
+    tokens.erase(tokens.begin());
 
     return token;
 }
