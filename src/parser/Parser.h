@@ -2,6 +2,8 @@
 // Created by salah on 29.10.2019.
 //
 #pragma once
+
+#include <stack>
 #include "../base.h"
 
 IR parseProgram(std::vector<Token> tokens);
@@ -15,3 +17,6 @@ Operator* parseOperator(std::vector<Token> tokens);
 Token getToken(std::vector<Token> tokens);
 bool nextToken(TokenType tokenType, int ttType, std::vector<Token> tokens);
 bool nextToken(TokenType tokenTyp, std::vector<Token> tokens);
+bool nextToken(TokenType tokenType, int ttType, std::stack<Token> stack);
+Token getToken(std::stack<Token> stack);
+int getPriority(Token token);

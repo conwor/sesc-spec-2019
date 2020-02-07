@@ -5,6 +5,7 @@
 #include "../base.h"
 #include "Parser.h"
 #include <iostream>
+#include <stack>
 
 using namespace std;
 
@@ -114,7 +115,58 @@ Operator* parseOperator(vector<Token> tokens) {
 }
 
 Expression* parseExpression(vector<Token> tokens) {
+    vector<Token> rpnExpression;
+    stack<Token> stack;
 
+    while (nextToken(TT_OPERATION, SEMICOLON, tokens)) {
+        if (nextToken(TT_IDENT, tokens)) {
+            rpnExpression.push_back(getToken(tokens));
+        } else if (nextToken(TT_OPERATION, OPEN_PARENTHESE, tokens)) {
+            stack.push(getToken(tokens));
+        } else if (nextToken(TT_OPERATION, CLOSE_PARENTHESE, tokens)) {
+            while (!nextToken(TT_OPERATION, OPEN_PARENTHESE, stack)) {
+                rpnExpression.push_back(getToken(stack));
+                if (stack.empty()) throw; // missing close parenthesis
+            }
+            stack.pop();
+        } else if (nextToken(TT_OPERATION, tokens) && !nextToken(TT_OPERATION, ASSIGN, tokens)) {
+            Token token = getToken(tokens);
+            if (getPriority(token) > getPriority(stack.top())) {
+                stack.push(token);
+            } else {
+                rpnExpression.push_back(stack.top());
+                stack.push(token);
+            }
+        }
+    }
+
+
+}
+
+int getPriority(Token token) {
+    switch (token.value) {
+        case EQ:
+        case NE:
+        case LS:
+        case BG:
+        case LS_EQ:
+        case BG_EQ:
+        case AND:
+        case OR:
+        case NOT:
+            return 1;
+        case ADD:
+        case SUB:
+        case MOD:
+            return 2;
+        case MUL:
+        case DIV:
+            return 3;
+    }
+}
+
+bool nextToken(TokenType tokenType, int ttType, stack<Token> stack) {
+    return stack.top().type == tokenType && stack.top().value == ttType;
 }
 
 bool nextToken(TokenType tokenType, int ttType, vector<Token> tokens) {
@@ -124,7 +176,7 @@ bool nextToken(TokenType tokenType, int ttType, vector<Token> tokens) {
 bool nextToken(TokenType tokenType, vector<Token> tokens) {
     return tokens.at(0).type == tokenType;
 }
-    
+
 void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
     auto index = tokens.begin();
     if (tokens.at(0).type == tokenType && tokens.at(0).value == ttType) {
@@ -137,6 +189,13 @@ void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
 Token getToken(vector<Token> tokens) {
     Token token = tokens.at(0);
     tokens.erase(tokens.begin());
+
+    return token;
+}
+
+Token getToken(stack<Token> stack) {
+    Token token = stack.top();
+    stack.pop();
 
     return token;
 }
