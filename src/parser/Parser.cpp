@@ -9,6 +9,13 @@
 
 using namespace std;
 
+Expression* getExpression(stack<Expression*> stack) {
+    Expression* expression = stack.top();
+    stack.pop();
+
+    return expression;
+}
+
 IR parseProgram(vector<Token> tokens) {
     while (!tokens.empty()) {
         parseFunction(tokens);
@@ -72,18 +79,48 @@ Operator* parseOperator(vector<Token> tokens) {
         case TT_KEYWORD :
             switch(operatorToken.value) {
                 case KW_IF : {
+                    skipToken(TT_KEYWORD, KW_IF, tokens);
+
+                    IfOperator* ifOperator = new IfOperator();
+
                     skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
 
                     Expression* ifCondition = parseExpression(tokens);
+                    ifOperator->condition = ifCondition;
 
                     skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
 
-                    vector<Operator*> ifBody = parseBody(tokens);
+                    vector<Operator*> thenBody = parseBody(tokens);
+                    ifOperator->thenPart = thenBody;
+
+                    if (nextToken(TT_KEYWORD, KW_ELSE, tokens)) {
+                        skipToken(TT_KEYWORD, KW_ELSE, tokens);
+                        vector<Operator*> elseBody = parseBody(tokens);
+                        ifOperator->elsePart = elseBody;
                     }
-                    break;
-                case KW_WHILE :
-                    break;
+
+                    return ifOperator;
+                    }
+                case KW_WHILE : {
+                    skipToken(TT_KEYWORD, KW_WHILE, tokens);
+
+                    WhileOperator* whileOperator = new WhileOperator();
+
+                    skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
+
+                    Expression* whileCondition = parseExpression(tokens);
+                    whileOperator->condition = whileCondition;
+
+                    skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
+
+                    vector<Operator*> whileBody = parseBody(tokens);
+                    whileOperator->body = whileBody;
+
+                    return whileOperator;
+                    }
                 case KW_INT: {
+                    skipToken(TT_KEYWORD, KW_INT, tokens);
+
                     VarDefOperator* defOperator = new VarDefOperator();
 
                     Token nameToken = getToken(tokens);
@@ -97,10 +134,8 @@ Operator* parseOperator(vector<Token> tokens) {
 
                     return defOperator;
                     }
-                    break;
                 case KW_RETURN: {
-                    ExpressionOperator *returnOperator = new ExpressionOperator();
-
+                    ExpressionOperator* returnOperator = new ExpressionOperator();
                     }
                     break;
                 default:
@@ -109,38 +144,64 @@ Operator* parseOperator(vector<Token> tokens) {
             break;
         case TT_IDENT :
         case TT_LITERAL:
-        case TT_OPERATION:
-            break;
+        case TT_OPERATION: {
+            ExpressionOperator* expressionOperator = new ExpressionOperator();
+
+            Expression* expression = parseExpression(tokens);
+            expressionOperator->expr = expression;
+
+            return expressionOperator;
+            }
     }
 }
 
 Expression* parseExpression(vector<Token> tokens) {
     vector<Token> rpnExpression;
-    stack<Token> stack;
+    stack<Token> tokenStack;
 
     while (nextToken(TT_OPERATION, SEMICOLON, tokens)) {
         if (nextToken(TT_IDENT, tokens)) {
             rpnExpression.push_back(getToken(tokens));
         } else if (nextToken(TT_OPERATION, OPEN_PARENTHESE, tokens)) {
-            stack.push(getToken(tokens));
+            tokenStack.push(getToken(tokens));
         } else if (nextToken(TT_OPERATION, CLOSE_PARENTHESE, tokens)) {
-            while (!nextToken(TT_OPERATION, OPEN_PARENTHESE, stack)) {
-                rpnExpression.push_back(getToken(stack));
-                if (stack.empty()) throw; // missing close parenthesis
+            while (!nextToken(TT_OPERATION, OPEN_PARENTHESE, tokenStack)) {
+                rpnExpression.push_back(getToken(tokenStack));
+                if (tokenStack.empty()) throw; // missing close parenthesis
             }
-            stack.pop();
+            tokenStack.pop();
         } else if (nextToken(TT_OPERATION, tokens) && !nextToken(TT_OPERATION, ASSIGN, tokens)) {
             Token token = getToken(tokens);
-            if (getPriority(token) > getPriority(stack.top())) {
-                stack.push(token);
-            } else {
-                rpnExpression.push_back(stack.top());
-                stack.push(token);
+            if (getPriority(token) > getPriority(tokenStack.top())) {
+                tokenStack.push(token);
+            } else if (getPriority(token) <= getPriority(tokenStack.top())){
+                rpnExpression.push_back(tokenStack.top());
+                tokenStack.push(token);
             }
         }
     }
 
+    while (!tokenStack.empty()) {
+        rpnExpression.push_back(getToken(tokenStack));
+    }
 
+    stack<Expression*> expressionStack;
+    while (!rpnExpression.empty()) {
+        Expression* expression = new Expression();
+        if (nextToken(TT_IDENT, tokens)) {
+            expression->token = getToken(tokens);
+            expressionStack.push(expression);
+        } else if (nextToken(TT_OPERATION, tokens)) {
+            expression->token = getToken(tokens);
+            Expression* rArg = getExpression(expressionStack);
+            Expression* lArg = getExpression(expressionStack);
+            expression->lArg = lArg;
+            expression->rArg = rArg;
+            expressionStack.push(expression);
+        }
+    }
+
+    return expressionStack.top();
 }
 
 int getPriority(Token token) {
