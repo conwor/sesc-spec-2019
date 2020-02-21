@@ -54,7 +54,7 @@ void printFunc(BCFunction *func, ostream& os) {
 void writeBytecode(Bytecode* bc, ostream& os) {
     os << bc->functions.size() << endl;
     for (auto function : bc->functions) {
-        os << function->name << endl;
+        os << endl;
         os << function->regsNumber << endl;
         os << function->commands.size() << endl;
         printFunc(function, os);

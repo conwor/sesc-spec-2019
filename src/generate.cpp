@@ -6,7 +6,7 @@ using namespace std;
 
 vector<string> indexToString = {"a", "b", "c", "main", "foo", "baz"};
 
-class regsInfo {
+class RegsInfo {
 public:
     int allocateRegister() {
         regsNumber++;
@@ -14,12 +14,12 @@ public:
     }
 
     void allocateVariable(int nameIndex) {
-        nameToIndex[indexToString[nameIndex]] = regsNumber;
+        nameToIndex[nameIndex] = regsNumber;
         regsNumber++;
     }
 
     int registerOf(int nameIndex) {
-        return nameToIndex.at(indexToString[nameIndex]);
+        return nameToIndex.at(nameIndex);
     }
 
     int getRegsNum() {
@@ -27,19 +27,19 @@ public:
     }
 private:
     int regsNumber = 0;
-    map<string, int> nameToIndex;
+    map<int, int> nameToIndex;
 };
 
-class funcInfo {
+class FuncInfo {
 public:
     int allocateFunc(int nameIndex) {
         int size = nameToIndex.size();
-        nameToIndex[indexToString[nameIndex]] = size;
+        nameToIndex[nameIndex] = size;
         return size;
     }
 
     int numOf(int nameIndex){
-        return nameToIndex.at(indexToString.at(nameIndex));
+        return nameToIndex.at(nameIndex);
     }
 
     int getFuncsNum(){
@@ -47,7 +47,7 @@ public:
     }
 
 private:
-    map<string, int> nameToIndex;
+    map<int, int> nameToIndex;
 };
 
 /*
@@ -55,13 +55,13 @@ private:
  * (3 + 123) * (12 * (37 - 12)) or (1 == 2) && (3 != 4) or (a + 2) * 10
  * in BCCommands like IADD, ILOAD or LAND
  */
-void addExpression(vector<BCCommand> *result, Expression *expr,
-        int commandResult, regsInfo *regsInformation, funcInfo *funcInformation) {
+int genExpression(vector<BCCommand>& result, Expression *expr,
+		RegsInfo& regsInformation, FuncInfo& funcInformation) {
     FunctionCall *funcPtr = dynamic_cast<FunctionCall*>(expr);
     if(funcPtr != NULL){
-        BCCommand funcCall(funcInformation->numOf(funcPtr->token.value), BCCommandType::CALL);
-        result->push_back(funcCall);
-        return;
+        BCCommand funcCall(funcInformation.numOf(funcPtr->token.value), BCCommandType::CALL);
+        result.push_back(funcCall);
+        return -1;
     }
 
     int left, right;
@@ -69,15 +69,14 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
 
     switch (expr->token.type) {
     case TT_IDENT: {
-        BCCommand ass(expr->token.value, commandResult, BCCommandType::IMOV);
-        result->push_back(ass);
-        return;
+        return expr->token.value;
     }
 
     case TT_LITERAL: {
+    	int commandResult = regsInformation.allocateRegister();
         BCCommand load(expr->token.value, commandResult, BCCommandType::ILOAD);
-        result->push_back(load);
-        return;
+        result.push_back(load);
+        return commandResult;
     }
     }
 
@@ -88,35 +87,33 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
 
     switch (leftT) {
     case TT_LITERAL: {
-        left = regsInformation->allocateRegister();
+        left = regsInformation.allocateRegister();
         BCCommand lLoad(expr->lArg->token.value, left, BCCommandType::ILOAD);
-        result->push_back(lLoad);
+        result.push_back(lLoad);
         break;
     }
     case TT_IDENT:
         left = expr->lArg->token.value;
         break;
     case TT_OPERATION:
-        left = regsInformation->allocateRegister();
-        addExpression(result, expr->lArg, left, regsInformation, funcInformation);
+        left = genExpression(result, expr->lArg, regsInformation, funcInformation);
         break;
     }
 
     if (!(expr->token.value == LNOT && rightT == TT_OPERATION)) {
         switch (rightT) {
         case TT_LITERAL: {
-            right = regsInformation->allocateRegister();
+            right = regsInformation.allocateRegister();
             BCCommand rLoad(expr->rArg->token.value, right,
                     BCCommandType::ILOAD);
-            result->push_back(rLoad);
+            result.push_back(rLoad);
             break;
         }
         case TT_IDENT:
             right = expr->rArg->token.value;
             break;
         case TT_OPERATION:
-            right = regsInformation->allocateRegister();
-            addExpression(result, expr->rArg, right, regsInformation, funcInformation);
+            right = genExpression(result, expr->rArg, regsInformation, funcInformation);
             break;
         }
     }
@@ -157,21 +154,21 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case BG: {
         comType = BCCommandType::LAND;
 
-        int less = regsInformation->allocateRegister();
+        int less = regsInformation.allocateRegister();
 
-        int eq = regsInformation->allocateRegister();
+        int eq = regsInformation.allocateRegister();
 
-        int notEq = regsInformation->allocateRegister();
+        int notEq = regsInformation.allocateRegister();
 
         BCCommand lessCom(left, right, less, ICMPLS);
-        result->push_back(lessCom);
+        result.push_back(lessCom);
         BCCommand notLess(less, less, LNOT);
-        result->push_back(notLess);
+        result.push_back(notLess);
 
         BCCommand eqCom(left, right, eq, ICMPEQ);
-        result->push_back(eqCom);
+        result.push_back(eqCom);
         BCCommand notEqual(eq, notEq, LNOT);
-        result->push_back(notEqual);
+        result.push_back(notEqual);
 
         left = less;
         right = notEq;
@@ -180,10 +177,10 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case BG_EQ: {
         comType = BCCommandType::LNOT;
 
-        int less = regsInformation->allocateRegister();
+        int less = regsInformation.allocateRegister();
 
         BCCommand lessCom(left, right, less, ICMPLS);
-        result->push_back(lessCom);
+        result.push_back(lessCom);
 
         left = less;
         break;
@@ -191,10 +188,10 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     case NE: {
         comType = BCCommandType::LNOT;
 
-        int eq = regsInformation->allocateRegister();
+        int eq = regsInformation.allocateRegister();
 
         BCCommand eqCom(left, right, eq, ICMPEQ);
-        result->push_back(eqCom);
+        result.push_back(eqCom);
         left = eq;
         break;
     }
@@ -206,6 +203,7 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
     }
 
     BCCommand com;
+    int commandResult = regsInformation.allocateRegister();
     if (comType == LNOT) {
         com.arg0 = left;
         com.result = commandResult;
@@ -217,24 +215,23 @@ void addExpression(vector<BCCommand> *result, Expression *expr,
         com.type = comType;
     }
 
-    result->push_back(com);
+    result.push_back(com);
+    return commandResult;
 }
 
-vector<BCCommand> generateCommands(vector<Operator*> *operators,
-        regsInfo *regsInformation, funcInfo *funcInformation) {
+vector<BCCommand> generateCommands(vector<Operator*>& operators,
+        RegsInfo& regsInformation, FuncInfo& funcInformation) {
     vector<BCCommand> result;
-    for (auto _operator : *operators) {
+    for (auto _operator : operators) {
         //ASSIGN
         AssignOperator* asPtr = dynamic_cast<AssignOperator*>(_operator);
         if (asPtr != NULL) {
             BCCommand assign;
 
-            assign.result = regsInformation->registerOf(asPtr->variableNameIndex);
+            assign.result = regsInformation.registerOf(asPtr->variableNameIndex);
             assign.type = BCCommandType::IMOV;
+            assign.arg0 = genExpression(result, asPtr->value, regsInformation, funcInformation);
 
-            int commandResult = regsInformation->allocateRegister();
-            addExpression(&result, asPtr->value, commandResult, regsInformation, funcInformation);
-            assign.arg0 = commandResult;
 
             result.push_back(assign);
         }
@@ -242,7 +239,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
         //VARDEF
         VarDefOperator* varPtr = dynamic_cast<VarDefOperator*>(_operator);
         if (varPtr != NULL) {
-            regsInformation->allocateVariable(varPtr->nameIndex);
+            regsInformation.allocateVariable(varPtr->nameIndex);
         }
 
         /*
@@ -254,14 +251,12 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
          */
         IfOperator *ifPtr = dynamic_cast<IfOperator*>(_operator);
         if (ifPtr != NULL) {
-            int commandResult = regsInformation->allocateRegister();
-
-            addExpression(&result, ifPtr->condition, commandResult, regsInformation, funcInformation);
+            int commandResult = genExpression(result, ifPtr->condition, regsInformation, funcInformation);
 
             BCCommand ifCom;
             ifCom.arg0 = commandResult;
 
-            vector<BCCommand> elsePart = generateCommands(&(ifPtr->elsePart),
+            vector<BCCommand> elsePart = generateCommands(ifPtr->elsePart,
                     regsInformation, funcInformation);
 
             ifCom.result = result.size() + 2 + elsePart.size();
@@ -269,11 +264,9 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
 
             result.push_back(ifCom);
 
-            for (auto& i : elsePart) {
-                result.push_back(i);
-            }
+            result.insert(result.end(), elsePart.begin(), elsePart.end());
 
-            vector<BCCommand> thenPart = generateCommands(&(ifPtr->thenPart),
+            vector<BCCommand> thenPart = generateCommands(ifPtr->thenPart,
                     regsInformation, funcInformation);
 
             BCCommand gotoEndOfThen;
@@ -282,9 +275,7 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
 
             result.push_back(gotoEndOfThen);
 
-            for (auto& i : thenPart) {
-                result.push_back(i);
-            }
+            result.insert(result.end(), thenPart.begin(), thenPart.end());
 
         }
 
@@ -297,21 +288,17 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
          */
         WhileOperator *whilePtr = dynamic_cast<WhileOperator*>(_operator);
         if (whilePtr != NULL) {
-            int commandResult = regsInformation->allocateRegister();
-
             BCCommand gotoIf(result.size(), GOTO);
 
-            addExpression(&result, whilePtr->condition, commandResult, regsInformation, funcInformation);
+            int commandResult = genExpression(result, whilePtr->condition, regsInformation, funcInformation);
 
-            vector<BCCommand> cmds = generateCommands(&(whilePtr->body), regsInformation, funcInformation);
+            vector<BCCommand> cmds = generateCommands(whilePtr->body, regsInformation, funcInformation);
 
             BCCommand ifCom(commandResult, result.size() + cmds.size() + 2, IF);
 
             result.push_back(ifCom);
 
-            for (auto cmd : cmds) {
-                result.push_back(cmd);
-            }
+            result.insert(result.end(), cmds.begin(), cmds.end());
 
             result.push_back(gotoIf);
         }
@@ -319,33 +306,30 @@ vector<BCCommand> generateCommands(vector<Operator*> *operators,
         //Expressions
         ExpressionOperator *exprPtr = dynamic_cast<ExpressionOperator*>(_operator);
         if (exprPtr != NULL) {
-            int commandResult = regsInformation->allocateRegister();
-
-            addExpression(&result, exprPtr->expr, commandResult, regsInformation, funcInformation);
+            int commandResult = genExpression(result, exprPtr->expr, regsInformation, funcInformation);
         }
 
     }
     return result;
 }
 
-BCFunction *generateFunction(Function *func, funcInfo *funcInformation) {
-    regsInfo regsInformation;
+BCFunction *generateFunction(Function *func, FuncInfo& funcInformation) {
+    RegsInfo regsInformation;
 
     BCFunction *result = new BCFunction;
-    result->name = indexToString[func->nameIndex];
-    result->commands = generateCommands(&(func->body), &regsInformation, funcInformation);
+    result->commands = generateCommands(func->body, regsInformation, funcInformation);
     result->regsNumber = regsInformation.getRegsNum();
     return result;
 }
 
 Bytecode* generateBytecode(IR* ir) {
     Bytecode *result = new Bytecode;
-    funcInfo funcInformation;
+    FuncInfo funcInformation;
     for(auto *function : ir->functions){
         funcInformation.allocateFunc(function->nameIndex);
     }
     for (auto *function : ir->functions) {
-        BCFunction *func = generateFunction(function, &funcInformation);
+        BCFunction *func = generateFunction(function, funcInformation);
         result->functions.push_back(func);
     }
     return result;

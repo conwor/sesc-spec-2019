@@ -24,52 +24,23 @@ Expression makeVarExpr(int reg){
 
 void TestAssign() {
     {
+    	// x = (3 + 2) * 10 * (11 + 2)
         ostringstream exp;
-        exp << "1" << endl << "main" << endl;
+        exp << "1" << endl << endl;
         exp << "10" << endl <<  "10" << endl;
-        exp << "ILOAD 3 4" << endl;
-        exp << "ILOAD 1 5" << endl;
-        exp << "IADD 4 5 3" << endl;
-        exp << "ILOAD 10 6" << endl;
-        exp << "IMUL 3 6 2" << endl;
-        exp << "ILOAD 11 8" << endl;
-        exp << "ILOAD 2 9" << endl;
-        exp << "IADD 8 9 7" << endl;
-        exp << "IMUL 2 7 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "ILOAD 3 1" << endl;
+        exp << "ILOAD 1 2" << endl;
+        exp << "IADD 1 2 3" << endl;
+        exp << "ILOAD 10 4" << endl;
+        exp << "IMUL 3 4 5" << endl;
+        exp << "ILOAD 11 6" << endl;
+        exp << "ILOAD 2 7" << endl;
+        exp << "IADD 6 7 8" << endl;
+        exp << "IMUL 5 8 9" << endl;
+        exp << "IMOV 9 0" << endl;
         exp << "RET" << endl;
 
         ostringstream out;
-
-        BCCommand load34(3, 4, ILOAD);
-        BCCommand load15(1, 5, ILOAD);
-        BCCommand load106(10, 6, ILOAD);
-        BCCommand load118(11, 8, ILOAD);
-        BCCommand load29(2, 9, ILOAD);
-
-        BCCommand add453(4, 5, 3, IADD);
-        BCCommand add897(8, 9, 7, IADD);
-
-        BCCommand mul362(3, 6, 2, IMUL);
-        BCCommand mul271(2, 7, 1, IMUL);
-
-        BCCommand move(1, 0, IMOV);
-
-        BCFunction func;
-        func.name = "main";
-        func.regsNumber = 10;
-        func.commands = {load34, load15, add453, load106, mul362, load118,
-                load29, add897, mul271, move};
-
-        Bytecode bc;
-        bc.functions.push_back(&func);
-
-        writeBytecode(&bc, out);
-
-        if(out.str() != exp.str()){
-            cerr << "Wrong TEST at 69 line test.cpp" << endl;
-            throw system_error();
-        }
 
         Expression three = makeIntExpr(3);
         Expression ten = makeIntExpr(10);
@@ -112,9 +83,10 @@ void TestAssign() {
         }
     }
     {
+    	// x = 1
         ostringstream exp;
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp << endl;
         exp << "2" << endl;
         exp << "2" << endl;
         exp << "ILOAD 10 1" << endl;
@@ -150,14 +122,15 @@ void TestAssign() {
         }
     }
     {
+    	// x = a * 3
         ostringstream exp;
         exp << "1" << endl;
-        exp << "main" << endl;
-        exp << "3" << endl;
+        exp <<  endl;
+        exp << "4" << endl;
         exp << "3" << endl;
         exp << "ILOAD 3 2" << endl;
-        exp << "IMUL 1 2 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "IMUL 1 2 3" << endl;
+        exp << "IMOV 3 0" << endl;
         exp << "RET" << endl;
 
         ostringstream out;
@@ -166,13 +139,15 @@ void TestAssign() {
 
         Expression three = makeIntExpr(3);
 
+        VarDefOperator varADef(1);
+
         Expression varA = makeVarExpr(1);
 
         Expression mul3a(&varA, &three, TT_OPERATION, 2);
 
         AssignOperator assign(&mul3a, 0);
 
-        Function func(3, {&var, &assign});
+        Function func(3, {&var, &varADef, &assign});
 
         IR ir(&func);
 
@@ -188,15 +163,15 @@ void TestAssign() {
         }
     }
     {
+    	// a = b
         ostringstream exp;
         ostringstream out;
 
         exp << "1" << endl;
-        exp << "main" << endl;
-        exp << "3" << endl;
+        exp <<  endl;
         exp << "2" << endl;
-        exp << "IMOV 0 2" << endl;
-        exp << "IMOV 2 1" << endl;
+        exp << "1" << endl;
+        exp << "IMOV 0 1" << endl;
         exp << "RET" << endl;
 
         VarDefOperator varA(0);
@@ -222,19 +197,20 @@ void TestAssign() {
         }
     }
     {
+    	// b = (a + b + 3) * 3
         ostringstream exp;
         ostringstream out;
 
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "7" << endl;
         exp << "6" << endl;
-        exp << "ILOAD 3 3" << endl;
-        exp << "IADD 0 1 5" << endl;
-        exp << "ILOAD 3 6" << endl;
-        exp << "IADD 5 6 4" << endl;
-        exp << "IMUL 3 4 2" << endl;
-        exp << "IMOV 2 1" << endl;
+        exp << "ILOAD 3 2" << endl;
+        exp << "IADD 0 1 3" << endl;
+        exp << "ILOAD 3 4" << endl;
+        exp << "IADD 3 4 5" << endl;
+        exp << "IMUL 2 5 6" << endl;
+        exp << "IMOV 6 1" << endl;
         exp << "RET" << endl;
 
         VarDefOperator varA(0);
@@ -275,31 +251,31 @@ void TestIf(){
 
         //(1 < 2 && 2 > 1) && (1 >= 0 || 2 != 0)
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "21" << endl;
         exp << "22" << endl;
-        exp << "ILOAD 1 4" << endl;
-        exp << "ILOAD 2 5" << endl;
-        exp << "ICMPLS 4 5 3" << endl;
-        exp << "ILOAD 2 7" << endl;
-        exp << "ILOAD 1 8" << endl;
-        exp << "ICMPLS 7 8 9" << endl;
-        exp << "LNOT 9 9" << endl;
-        exp << "ICMPEQ 7 8 10" << endl;
-        exp << "LNOT 10 11" << endl;
-        exp << "LAND 9 11 6" << endl;
-        exp << "LAND 3 6 2" << endl;
-        exp << "ILOAD 0 14" << endl;
-        exp << "ILOAD 2 15" << endl;
-        exp << "ICMPEQ 14 15 16" << endl;
-        exp << "LNOT 16 13" << endl;
-        exp << "ILOAD 1 18" << endl;
-        exp << "ILOAD 0 19" << endl;
-        exp << "ICMPLS 18 19 20" << endl;
-        exp << "LNOT 20 17" << endl;
-        exp << "LOR 13 17 12" << endl;
-        exp << "LAND 2 12 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "ICMPLS 1 2 3" << endl;
+        exp << "ILOAD 2 4" << endl;
+        exp << "ILOAD 1 5" << endl;
+        exp << "ICMPLS 4 5 6" << endl;
+        exp << "LNOT 6 6" << endl;
+        exp << "ICMPEQ 4 5 7" << endl;
+        exp << "LNOT 7 8" << endl;
+        exp << "LAND 6 8 9" << endl;
+        exp << "LAND 3 9 10" << endl;
+        exp << "ILOAD 0 11" << endl;
+        exp << "ILOAD 2 12" << endl;
+        exp << "ICMPEQ 11 12 13" << endl;
+        exp << "LNOT 13 14" << endl;
+        exp << "ILOAD 1 15" << endl;
+        exp << "ILOAD 0 16" << endl;
+        exp << "ICMPLS 15 16 17" << endl;
+        exp << "LNOT 17 18" << endl;
+        exp << "LOR 14 18 19" << endl;
+        exp << "LAND 10 19 20" << endl;
+        exp << "IMOV 20 0" << endl;
         exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
@@ -338,18 +314,19 @@ void TestIf(){
         }
     }
     {
+    	// 1 != 2
         ostringstream exp;
         ostringstream out;
 
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "5" << endl;
         exp << "5" << endl;
-        exp << "ILOAD 0 2" << endl;
-        exp << "ILOAD 2 3" << endl;
-        exp << "ICMPEQ 2 3 4" << endl;
-        exp << "LNOT 4 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "ILOAD 0 1" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "ICMPEQ 1 2 3" << endl;
+        exp << "LNOT 3 4" << endl;
+        exp << "IMOV 4 0" << endl;
         exp << "RET" << endl;
 
         Expression one = makeIntExpr(0);
@@ -377,19 +354,20 @@ void TestIf(){
         }
     }
     {
+    	// 0 == 0 && 0 == 1
         ostringstream exp;
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "8" << endl;
         exp << "8" << endl;
-        exp << "ILOAD 1 3" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ILOAD 0 2" << endl;
+        exp << "ICMPEQ 1 2 3" << endl;
         exp << "ILOAD 0 4" << endl;
-        exp << "ICMPEQ 3 4 2" << endl;
-        exp << "ILOAD 0 6" << endl;
-        exp << "ILOAD 0 7" << endl;
-        exp << "ICMPEQ 6 7 5" << endl;
-        exp << "LAND 2 5 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "ILOAD 0 5" << endl;
+        exp << "ICMPEQ 4 5 6" << endl;
+        exp << "LAND 3 6 7" << endl;
+        exp << "IMOV 7 0" << endl;
         exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
@@ -422,18 +400,21 @@ void TestIf(){
         }
     }
     {
+    	// if (1 + 2 == 3)
+    	// then x = 1
+    	// else x = 2
         ostringstream exp;
 
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "8" << endl;
         exp << "11" << endl;
-        exp << "ILOAD 1 3" << endl;
-        exp << "ILOAD 2 4" << endl;
-        exp << "IADD 3 4 2" << endl;
-        exp << "ILOAD 3 5" << endl;
-        exp << "ICMPEQ 2 5 1" << endl;
-        exp << "IF 1 9" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ILOAD 2 2" << endl;
+        exp << "IADD 1 2 3" << endl;
+        exp << "ILOAD 3 4" << endl;
+        exp << "ICMPEQ 3 4 5" << endl;
+        exp << "IF 5 9" << endl;
         exp << "ILOAD 2 6" << endl;
         exp << "IMOV 6 0" << endl;
         exp << "GOTO 11" << endl;
@@ -475,23 +456,26 @@ void TestIf(){
 
 void TestWhile(){
     {
+    	// x = 1
+    	// while (1 + 9 == 10)
+    	// then x = 1 + 9
         stringstream exp;
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "10" << endl;
         exp << "13" << endl;
         exp << "ILOAD 1 1" << endl;
         exp << "IMOV 1 0" << endl;
-        exp << "ILOAD 1 4" << endl;
-        exp << "ILOAD 9 5" << endl;
-        exp << "IADD 4 5 3" << endl;
-        exp << "ILOAD 10 6" << endl;
-        exp << "ICMPEQ 3 6 2" << endl;
-        exp << "IF 2 13" << endl;
-        exp << "ILOAD 1 8" << endl;
-        exp << "ILOAD 9 9" << endl;
-        exp << "IADD 8 9 7" << endl;
-        exp << "IMOV 7 0" << endl;
+        exp << "ILOAD 1 2" << endl;
+        exp << "ILOAD 9 3" << endl;
+        exp << "IADD 2 3 4" << endl;
+        exp << "ILOAD 10 5" << endl;
+        exp << "ICMPEQ 4 5 6" << endl;
+        exp << "IF 6 13" << endl;
+        exp << "ILOAD 1 7" << endl;
+        exp << "ILOAD 9 8" << endl;
+        exp << "IADD 7 8 9" << endl;
+        exp << "IMOV 9 0" << endl;
         exp << "GOTO 2" << endl;
         exp << "RET" << endl;
 
@@ -536,21 +520,21 @@ void TestMultiFunc(){
         ostringstream out;
 
         exp << "2" << endl;
-        exp << "foo" << endl;
+        exp << endl;
         exp << "4" << endl;
         exp << "4" << endl;
-        exp << "ILOAD 1 2" << endl;
-        exp << "ILOAD 2 3" << endl;
-        exp << "IADD 2 3 1" << endl;
-        exp << "IMOV 1 0" << endl;
-        exp << "RET" << endl;
-        exp << "baz" << endl;
-        exp << "4" << endl;
-        exp << "4" << endl;
+        exp << "ILOAD 1 1" << endl;
         exp << "ILOAD 2 2" << endl;
-        exp << "ILOAD 1 3" << endl;
-        exp << "ISUB 2 3 1" << endl;
-        exp << "IMOV 1 0" << endl;
+        exp << "IADD 1 2 3" << endl;
+        exp << "IMOV 3 0" << endl;
+        exp << "RET" << endl;
+        exp << endl;
+        exp << "4" << endl;
+        exp << "4" << endl;
+        exp << "ILOAD 2 1" << endl;
+        exp << "ILOAD 1 2" << endl;
+        exp << "ISUB 1 2 3" << endl;
+        exp << "IMOV 3 0" << endl;
         exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
@@ -589,12 +573,12 @@ void TestExpressionOp(){
         ostringstream out;
 
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "3" << endl;
         exp << "3" << endl;
-        exp << "ILOAD 1 1" << endl;
-        exp << "ILOAD 2 2" << endl;
-        exp << "IMUL 1 2 0" << endl;
+        exp << "ILOAD 1 0" << endl;
+        exp << "ILOAD 2 1" << endl;
+        exp << "IMUL 0 1 2" << endl;
         exp << "RET" << endl;
 
         Expression one = makeIntExpr(1);
@@ -624,7 +608,7 @@ void TestExpressionOp(){
         ostringstream out;
 
         exp << "1" << endl;
-        exp << "main" << endl;
+        exp <<  endl;
         exp << "1" << endl;
         exp << "1" << endl;
         exp << "ILOAD 1 0" << endl;
@@ -657,20 +641,20 @@ void TestFunctionCall(){
         ostringstream out;
 
         exp << "2" << endl;
-        exp << "baz" << endl;
+        exp << endl;
+        exp << "3" << endl;
         exp << "4" << endl;
-        exp << "4" << endl;
-        exp << "ILOAD 1 1" << endl;
-        exp << "ILOAD 2 2" << endl;
-        exp << "IADD 1 2 0" << endl;
+        exp << "ILOAD 1 0" << endl;
+        exp << "ILOAD 2 1" << endl;
+        exp << "IADD 0 1 2" << endl;
         exp << "CALL 1" << endl;
         exp << "RET" << endl;
-        exp << "foo" << endl;
+        exp << endl;
+        exp << "3" << endl;
         exp << "4" << endl;
-        exp << "4" << endl;
-        exp << "ILOAD 2 1" << endl;
-        exp << "ILOAD 1 2" << endl;
-        exp << "ISUB 1 2 0" << endl;
+        exp << "ILOAD 2 0" << endl;
+        exp << "ILOAD 1 1" << endl;
+        exp << "ISUB 0 1 2" << endl;
         exp << "CALL 0" << endl;
         exp << "RET" << endl;
 

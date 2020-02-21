@@ -195,11 +195,14 @@ struct BCCommand {
 
     BCCommand(int _arg0, int _result, BCCommandType _type) {
         arg0 = _arg0;
+        arg1 = -1;
         result = _result;
         type = _type;
     }
 
     BCCommand(int _result, BCCommandType _type) {
+    	arg0 = -1;
+    	arg1 = -1;
         result = _result;
         type = _type;
     }
@@ -221,7 +224,6 @@ struct BCCommand {
 };
 
 struct BCFunction {
-    std::string name;
     int regsNumber;
     std::vector<BCCommand> commands;
 };
