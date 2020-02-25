@@ -691,3 +691,68 @@ void TestFunctionCall(){
     }
 }
 
+void TestInputOut(){
+	{
+		//Print(1 + 2)
+		ostringstream exp;
+		ostringstream out;
+		exp << "1" << endl << endl;
+		exp << "3" << endl;
+		exp << "4" << endl;
+		exp << "ILOAD 1 0" << endl;
+		exp << "ILOAD 2 1" << endl;
+		exp << "IADD 0 1 2" << endl;
+		exp << "IWRITE 2" << endl;
+		exp << "RET" << endl;
+
+		Expression one = makeIntExpr(1);
+		Expression two = makeIntExpr(2);
+		Expression sum(&one, &two, TT_OPERATION, IADD);
+
+		WriteOperator write(&sum);
+		Function foo(0, &write);
+
+		IR ir({&foo});
+
+		Bytecode *bc = generateBytecode(&ir);
+
+		writeBytecode(bc, out);
+
+		if(out.str() != exp.str()){
+			cerr << "ERROR WRITE IS WRONG!" << endl;
+			throw system_error();
+		} else{
+			cerr << "WRITE IS RIGHT!" << endl;
+		}
+	}
+	{
+		//Write(a)
+		ostringstream exp;
+		ostringstream out;
+
+		exp << "1" << endl << endl;
+		exp << "1" << endl;
+		exp << "1" << endl;
+		exp << "IREAD 0" << endl;
+		exp << "RET" << endl;
+
+		VarDefOperator a(0);
+		ReadOperator read(0);
+
+		Function foo(0, {&a, &read});
+
+		IR ir({&foo});
+
+		Bytecode *bc = generateBytecode(&ir);
+
+		writeBytecode(bc, out);
+
+		if(out.str() != exp.str()){
+			cerr << "ERROR READ IS WRONG!" << endl;
+			throw system_error();
+		} else{
+			cerr << "READ IS RIGHT!" << endl;
+		}
+	}
+}
+
