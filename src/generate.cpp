@@ -303,6 +303,21 @@ vector<BCCommand> generateCommands(vector<Operator*>& operators,
             result.push_back(gotoIf);
         }
 
+        //ReadOperator
+        ReadOperator *readPtr = dynamic_cast<ReadOperator*>(_operator);
+        if(readPtr != NULL){
+        	BCCommand read(readPtr->name, BCCommandType::IREAD);
+        	result.push_back(read);
+        }
+
+        //WriteOperator
+        WriteOperator *writePtr = dynamic_cast<WriteOperator*>(_operator);
+        if(writePtr != NULL){
+        	int expr_res = genExpression(result, writePtr->value, regsInformation, funcInformation);
+        	BCCommand write(expr_res, BCCommandType::IWRITE);
+        	result.push_back(write);
+        }
+
         //Expressions
         ExpressionOperator *exprPtr = dynamic_cast<ExpressionOperator*>(_operator);
         if (exprPtr != NULL) {

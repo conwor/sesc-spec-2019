@@ -13,3 +13,5 @@ void TestMultiFunc();
 void TestExpressionOp();
 
 void TestFunctionCall();
+
+void TestInputOut();

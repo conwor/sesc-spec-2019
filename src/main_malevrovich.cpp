@@ -9,6 +9,7 @@ int main(){
     TestMultiFunc();
     TestExpressionOp();
     TestFunctionCall();
+    TestInputOut();
     return 0;
 }
 

@@ -52,7 +52,8 @@ struct Token {
 // IR
 
 struct Expression {
-    Expression(){};
+    Expression(){
+    };
 
     Expression(Expression *_lArg, Expression *_rArg, TokenType _type, int _val) {
         lArg = _lArg;
@@ -83,8 +84,36 @@ struct Operator {
     }
 };
 
+struct WriteOperator: public Operator{
+	WriteOperator(){
+		value = NULL;
+	}
+
+	WriteOperator(Expression* _value){
+		value = _value;
+	}
+
+	Expression* value;
+};
+
+struct ReadOperator: public Operator{
+	ReadOperator(){
+		name = 0;
+	}
+
+	ReadOperator(int _name){
+		name = _name;
+	}
+
+	int name;
+};
+
 struct IfOperator: public Operator {
-    IfOperator(){}
+    IfOperator(){
+    	thenPart = {};
+    	elsePart = {};
+    	condition = NULL;
+    }
 
     IfOperator(Expression *_condition, std::vector<Operator*> *_then,
             std::vector<Operator*> *_else) {
@@ -98,7 +127,10 @@ struct IfOperator: public Operator {
 };
 
 struct WhileOperator: public Operator {
-    WhileOperator(){}
+    WhileOperator(){
+    	condition = NULL;
+    	body = {};
+    }
 
     WhileOperator(Expression *_condition, std::vector<Operator*> *_body){
         condition = _condition;
@@ -110,7 +142,9 @@ struct WhileOperator: public Operator {
 };
 
 struct VarDefOperator: public Operator {
-    VarDefOperator() {}
+    VarDefOperator() {
+    	name = 0;
+    }
 
     VarDefOperator(int _name) {
         name = _name;
@@ -120,7 +154,10 @@ struct VarDefOperator: public Operator {
 };
 
 struct AssignOperator: public Operator {
-    AssignOperator() {}
+    AssignOperator() {
+    	name = 0;
+    	value = NULL;
+    }
 
     AssignOperator(Expression *_expr, int _name) {
         value = _expr;
@@ -139,6 +176,8 @@ struct ExpressionOperator: public Operator {
 
 struct Function {
     Function() {
+    	name = 0;
+    	body = {};
     }
 
     Function(int _name, Operator *_op){
@@ -191,6 +230,9 @@ enum BCCommandType { //Don't forget enumString at print.cpp
 
 struct BCCommand {
     BCCommand() {
+    	arg0 = -1;
+    	arg1 = -1;
+    	result = -1;
     }
 
     BCCommand(int _arg0, int _result, BCCommandType _type) {
