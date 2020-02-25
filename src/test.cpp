@@ -54,17 +54,17 @@ void TestAssign() {
         Expression mul(&mul10, &sum112, TT_OPERATION, 2);
 
         VarDefOperator var;
-        var.nameIndex = 0;
+        var.name = 0;
 
         AssignOperator assign;
         assign.value = &mul;
-        assign.variableNameIndex = 0;
+        assign.name = 0;
 
 
         Function irFunc;
 
         irFunc.body = {&var, &assign};
-        irFunc.nameIndex = 3;
+        irFunc.name = 3;
 
         IR ir;
 
@@ -94,16 +94,16 @@ void TestAssign() {
         exp << "RET" << endl;
 
         VarDefOperator var;
-        var.nameIndex = 0;
+        var.name = 0;
 
         Expression ten = makeIntExpr(10);
 
         AssignOperator assign;
-        assign.variableNameIndex = 0;
+        assign.name = 0;
         assign.value = &ten;
 
         Function func;
-        func.nameIndex = 3;
+        func.name = 3;
         func.body = {&var, &assign};
 
         IR ir;

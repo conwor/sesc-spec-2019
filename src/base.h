@@ -72,8 +72,8 @@ struct Expression {
 struct FunctionCall: public Expression{
     FunctionCall() {};
 
-    FunctionCall(int nameIndex){
-        token.value = nameIndex;
+    FunctionCall(int _name){
+        token.value = _name;
         token.type = TT_IDENT;
     }
 };
@@ -112,21 +112,21 @@ struct WhileOperator: public Operator {
 struct VarDefOperator: public Operator {
     VarDefOperator() {}
 
-    VarDefOperator(int _nameIndex) {
-        nameIndex = _nameIndex;
+    VarDefOperator(int _name) {
+        name = _name;
     }
 
-    int nameIndex;
+    int name;
 };
 
 struct AssignOperator: public Operator {
     AssignOperator() {}
 
-    AssignOperator(Expression *_expr, int _nameIndex) {
+    AssignOperator(Expression *_expr, int _name) {
         value = _expr;
-        variableNameIndex = _nameIndex;
+        name = _name;
     }
-    int variableNameIndex;
+    int name;
     Expression* value;
 };
 
@@ -141,16 +141,16 @@ struct Function {
     Function() {
     }
 
-    Function(int _nameIndex, Operator *_op){
-        nameIndex = _nameIndex;
+    Function(int _name, Operator *_op){
+        name = _name;
         body.push_back(_op);
     }
 
-    Function(int _nameIndex, const std::vector<Operator*>& _body) {
-        nameIndex = _nameIndex;
+    Function(int _name, const std::vector<Operator*>& _body) {
+        name = _name;
         body = _body;
     }
-    int nameIndex;
+    int name;
     std::vector<Operator*> body;
 };
 

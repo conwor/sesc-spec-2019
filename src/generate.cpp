@@ -13,13 +13,13 @@ public:
         return regsNumber - 1;
     }
 
-    void allocateVariable(int nameIndex) {
-        nameToIndex[nameIndex] = regsNumber;
+    void allocateVariable(int name) {
+        nameToIndex[name] = regsNumber;
         regsNumber++;
     }
 
-    int registerOf(int nameIndex) {
-        return nameToIndex.at(nameIndex);
+    int registerOf(int name) {
+        return nameToIndex.at(name);
     }
 
     int getRegsNum() {
@@ -32,14 +32,14 @@ private:
 
 class FuncInfo {
 public:
-    int allocateFunc(int nameIndex) {
+    int allocateFunc(int name) {
         int size = nameToIndex.size();
-        nameToIndex[nameIndex] = size;
+        nameToIndex[name] = size;
         return size;
     }
 
-    int numOf(int nameIndex){
-        return nameToIndex.at(nameIndex);
+    int numOf(int name){
+        return nameToIndex.at(name);
     }
 
     int getFuncsNum(){
@@ -228,7 +228,7 @@ vector<BCCommand> generateCommands(vector<Operator*>& operators,
         if (asPtr != NULL) {
             BCCommand assign;
 
-            assign.result = regsInformation.registerOf(asPtr->variableNameIndex);
+            assign.result = regsInformation.registerOf(asPtr->name);
             assign.type = BCCommandType::IMOV;
             assign.arg0 = genExpression(result, asPtr->value, regsInformation, funcInformation);
 
@@ -239,7 +239,7 @@ vector<BCCommand> generateCommands(vector<Operator*>& operators,
         //VARDEF
         VarDefOperator* varPtr = dynamic_cast<VarDefOperator*>(_operator);
         if (varPtr != NULL) {
-            regsInformation.allocateVariable(varPtr->nameIndex);
+            regsInformation.allocateVariable(varPtr->name);
         }
 
         /*
@@ -326,7 +326,7 @@ Bytecode* generateBytecode(IR* ir) {
     Bytecode *result = new Bytecode;
     FuncInfo funcInformation;
     for(auto *function : ir->functions){
-        funcInformation.allocateFunc(function->nameIndex);
+        funcInformation.allocateFunc(function->name);
     }
     for (auto *function : ir->functions) {
         BCFunction *func = generateFunction(function, funcInformation);
