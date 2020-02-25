@@ -9,25 +9,37 @@
 
 using namespace std;
 
+bool isSameToken(TokenType tokenType, int ttType, Token token) {
+    return token.type == tokenType && token.value == ttType;
+}
+
+bool isSameToken(TokenType tokenType, Token token) {
+    return token.type == tokenType;
+}
+
 bool nextToken(TokenType tokenType, int ttType, stack<Token> stack) {
-    return stack.top().type == tokenType && stack.top().value == ttType;
+    return isSameToken(tokenType, ttType, stack.top());
 }
 
 bool nextToken(TokenType tokenType, int ttType, vector<Token> tokens) {
-    return tokens.at(0).type == tokenType && tokens.at(0).value == ttType;
+    return isSameToken(tokenType, ttType, tokens.at(0));
 }
 
 bool nextToken(TokenType tokenType, vector<Token> tokens) {
-    return tokens.at(0).type == tokenType;
+    return isSameToken(tokenType, tokens.at(0));
 }
 
 void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
     auto index = tokens.begin();
-    if (tokens.at(0).type == tokenType && tokens.at(0).value == ttType) {
+    if (isSameToken(tokenType, ttType, tokens.at(0))) {
         tokens.erase(index);
     } else {
         throw;
     }
+}
+
+void skipToken(vector<Token> tokens) {
+    tokens.erase(tokens.begin());
 }
 
 Token getToken(vector<Token> tokens) {
@@ -51,18 +63,15 @@ Expression* getExpression(stack<Expression*> stack) {
     return expression;
 }
 
-string readFunctionType(vector<Token> tokens) {
-    if (nextToken(TT_KEYWORD, KW_VOID, tokens)) {
-        skipToken(TT_KEYWORD, KW_VOID, tokens);
-        return "void";
-    }
+KeyWordType readFunctionType(vector<Token> tokens) {
+    skipToken(tokens);
 
-    throw;
+    return KW_VOID;
 }
 
 int readFunctionName(vector<Token> tokens) {
     if (nextToken(TT_IDENT, tokens)) {
-        return getToken(tokens).type;
+        return getToken(tokens).value;
     }
 
     throw;
@@ -90,11 +99,12 @@ int getPriority(Token token) {
     }
 }
 
-Expression* parseExpression(vector<Token> tokens) {
+Expression* parseExpression(vector<Token> tokens, TokenType finishingTokenType, int finishingTokenValue) {
     vector<Token> rpnExpression;
     stack<Token> tokenStack;
 
-    while (nextToken(TT_OPERATION, SEMICOLON, tokens)) {
+    bool doCycle = true;
+    while (doCycle) {
         if (nextToken(TT_IDENT, tokens)) {
             rpnExpression.push_back(getToken(tokens));
         } else if (nextToken(TT_OPERATION, OPEN_PARENTHESE, tokens)) {
@@ -102,17 +112,27 @@ Expression* parseExpression(vector<Token> tokens) {
         } else if (nextToken(TT_OPERATION, CLOSE_PARENTHESE, tokens)) {
             while (!nextToken(TT_OPERATION, OPEN_PARENTHESE, tokenStack)) {
                 rpnExpression.push_back(getToken(tokenStack));
-                if (tokenStack.empty()) throw; // missing close parenthesis
+                if (tokenStack.empty()) {
+                    if (finishingTokenValue == CLOSE_PARENTHESE) {
+                        doCycle = false;
+                        break;
+                    }
+                    throw; // missing close parenthesis
+                }
             }
             tokenStack.pop();
         } else if (nextToken(TT_OPERATION, tokens) && !nextToken(TT_OPERATION, ASSIGN, tokens)) {
             Token token = getToken(tokens);
             if (getPriority(token) > getPriority(tokenStack.top())) {
                 tokenStack.push(token);
-            } else if (getPriority(token) <= getPriority(tokenStack.top())){
-                rpnExpression.push_back(tokenStack.top());
+            } else if (getPriority(token) <= getPriority(tokenStack.top())) {
+                rpnExpression.push_back(getToken(tokenStack));
                 tokenStack.push(token);
             }
+        } else if (nextToken(TT_OPERATION, SEMICOLON, tokens) && nextToken(finishingTokenType, finishingTokenValue, tokens)) {
+            break;
+        } else {
+            throw;
         }
     }
 
@@ -153,7 +173,7 @@ Operator* parseOperator(vector<Token> tokens) {
 
                     skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
 
-                    Expression* ifCondition = parseExpression(tokens);
+                    Expression* ifCondition = parseExpression(tokens, TT_OPERATION, CLOSE_PARENTHESE);
                     ifOperator->condition = ifCondition;
 
                     skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
@@ -176,7 +196,7 @@ Operator* parseOperator(vector<Token> tokens) {
 
                     skipToken(TT_OPERATION, OPEN_PARENTHESE, tokens);
 
-                    Expression* whileCondition = parseExpression(tokens);
+                    Expression* whileCondition = parseExpression(tokens, TT_OPERATION, CLOSE_PARENTHESE);
                     whileOperator->condition = whileCondition;
 
                     skipToken(TT_OPERATION, CLOSE_PARENTHESE, tokens);
@@ -215,7 +235,7 @@ Operator* parseOperator(vector<Token> tokens) {
         case TT_OPERATION: {
             ExpressionOperator* expressionOperator = new ExpressionOperator();
 
-            Expression* expression = parseExpression(tokens);
+            Expression* expression = parseExpression(tokens, TT_OPERATION, SEMICOLON);
             expressionOperator->expr = expression;
 
             return expressionOperator;
