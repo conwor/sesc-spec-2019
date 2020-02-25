@@ -131,6 +131,8 @@ struct WhileOperator: public Operator {
 struct VarDefOperator : public Operator {
     int name;
 
+    VarDefOperator(){}
+
     VarDefOperator(int _name) {
         name = _name;
     }
@@ -149,6 +151,8 @@ struct AssignOperator: public Operator {
 struct ExpressionOperator: public Operator {
     Expression* expr;
 
+    ExpressionOperator(){}
+
     ExpressionOperator(Expression *_expr){
         expr = _expr;
     }
@@ -158,6 +162,8 @@ struct Function {
     bool isMain = false; // TODO: check
     int name;
     std::vector<Operator*> body;
+
+    Function(){}
 
     Function(int _name, Operator *_op){
         name = _name;

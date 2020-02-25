@@ -2,7 +2,7 @@
 // Created by salah on 29.10.2019.
 //
 
-#include "../base.h"
+#include "base.h"
 #include "Parser.h"
 #include <iostream>
 #include <stack>
@@ -17,19 +17,19 @@ bool isSameToken(TokenType tokenType, Token token) {
     return token.type == tokenType;
 }
 
-bool nextToken(TokenType tokenType, int ttType, stack<Token> stack) {
+bool nextToken(TokenType tokenType, int ttType, stack<Token>& stack) {
     return isSameToken(tokenType, ttType, stack.top());
 }
 
-bool nextToken(TokenType tokenType, int ttType, vector<Token> tokens) {
+bool nextToken(TokenType tokenType, int ttType, vector<Token>& tokens) {
     return isSameToken(tokenType, ttType, tokens.at(0));
 }
 
-bool nextToken(TokenType tokenType, vector<Token> tokens) {
+bool nextToken(TokenType tokenType, vector<Token>& tokens) {
     return isSameToken(tokenType, tokens.at(0));
 }
 
-void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
+void skipToken(TokenType tokenType, int ttType, vector<Token>& tokens) {
     auto index = tokens.begin();
     if (isSameToken(tokenType, ttType, tokens.at(0))) {
         tokens.erase(index);
@@ -38,38 +38,38 @@ void skipToken(TokenType tokenType, int ttType, vector<Token> tokens) {
     }
 }
 
-void skipToken(vector<Token> tokens) {
+void skipToken(vector<Token>& tokens) {
     tokens.erase(tokens.begin());
 }
 
-Token getToken(vector<Token> tokens) {
+Token getToken(vector<Token>& tokens) {
     Token token = tokens.at(0);
     tokens.erase(tokens.begin());
 
     return token;
 }
 
-Token getToken(stack<Token> stack) {
+Token getToken(stack<Token>& stack) {
     Token token = stack.top();
     stack.pop();
 
     return token;
 }
 
-Expression* getExpression(stack<Expression*> stack) {
+Expression* getExpression(stack<Expression*>& stack) {
     Expression* expression = stack.top();
     stack.pop();
 
     return expression;
 }
 
-KeyWordType readFunctionType(vector<Token> tokens) {
+KeyWordType readFunctionType(vector<Token>& tokens) {
     skipToken(tokens);
 
     return KW_VOID;
 }
 
-int readFunctionName(vector<Token> tokens) {
+int readFunctionName(vector<Token>& tokens) {
     if (nextToken(TT_IDENT, tokens)) {
         return getToken(tokens).value;
     }
@@ -99,7 +99,7 @@ int getPriority(Token token) {
     }
 }
 
-Expression* parseExpression(vector<Token> tokens, TokenType finishingTokenType, int finishingTokenValue) {
+Expression* parseExpression(vector<Token>& tokens, TokenType finishingTokenType, int finishingTokenValue) {
     vector<Token> rpnExpression;
     stack<Token> tokenStack;
 
@@ -159,9 +159,9 @@ Expression* parseExpression(vector<Token> tokens, TokenType finishingTokenType, 
     return expressionStack.top();
 }
 
-vector<Operator*> parseBody(vector<Token> tokens);
+vector<Operator*> parseBody(vector<Token>& tokens);
 
-Operator* parseOperator(vector<Token> tokens) {
+Operator* parseOperator(vector<Token>& tokens) {
     Token operatorToken = tokens.front();
     switch (operatorToken.type) {
         case TT_KEYWORD :
@@ -243,7 +243,7 @@ Operator* parseOperator(vector<Token> tokens) {
     }
 }
 
-vector<Operator*> parseBody(vector<Token> tokens) {
+vector<Operator*> parseBody(vector<Token>& tokens) {
     vector<Operator*> body;
 
     skipToken(TT_OPERATION, OPEN_BRACE, tokens);
@@ -255,7 +255,7 @@ vector<Operator*> parseBody(vector<Token> tokens) {
     skipToken(TT_OPERATION, CLOSE_BRACE, tokens);
 }
 
-Function* parseFunction(vector<Token> tokens) {
+Function* parseFunction(vector<Token>& tokens) {
     Function* function = new Function();
     int name;
 
@@ -277,8 +277,11 @@ Function* parseFunction(vector<Token> tokens) {
     return function;
 }
 
-IR parseProgram(vector<Token> tokens) {
+IR* parseProgram(vector<Token>& tokens) {
+	vector<Function*> funcs;
     while (!tokens.empty()) {
-        parseFunction(tokens);
+        funcs.push_back(parseFunction(tokens));
     }
+    IR* ir = new IR(funcs);
+    return ir;
 }

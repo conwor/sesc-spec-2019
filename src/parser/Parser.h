@@ -4,6 +4,6 @@
 #pragma once
 
 #include <stack>
-#include "../base.h"
+#include "base.h"
 
-IR parseProgram(std::vector<Token> tokens);
+IR* parseProgram(std::vector<Token>& tokens);

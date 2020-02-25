@@ -8,7 +8,7 @@
 #include <fstream>
 #include <regex>
 
-#include "../base.h"
+#include "base.h"
 
 using namespace std;
 
@@ -101,7 +101,7 @@ vector<Token> makeTokens(string text) {
             column_counter = 0;
         }
 
-        cout << endl << cursubstring;
+//        cout << endl << cursubstring;
 
             // if it's a sequence of spaces
         if (regex_match(cursubstring + text[i], space_regex)){
