@@ -8,7 +8,7 @@
 #include <fstream>
 #include <regex>
 
-#include "base.h"
+#include "../base.h"
 
 using namespace std;
 
@@ -72,6 +72,7 @@ string readFile(string fileName) {
     for(chr = file.get(); !file.eof(); chr = file.get() ){
         output += chr;
     }
+    output += ' '; // NEED TO FIX
     return output;
 }
 

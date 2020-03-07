@@ -1,6 +1,6 @@
 #include <iostream>
 #include <map>
-#include "base.h"
+#include "../base.h"
 
 using namespace std;
 

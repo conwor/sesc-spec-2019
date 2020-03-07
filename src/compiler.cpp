@@ -2,23 +2,26 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 
-#include "generate.h"
-#include "lexic.h"
-#include "print.h"
-#include "Parser.h"
+#include "generator/generate.h"
+#include "lexer/lexic.h"
+#include "generator/print.h"
+#include "parser/Parser.h"
 
 using namespace std;
 
 int main(){
+	istringstream in("input.txt output.txt");
 	string input, output;
-	cin >> input >> output;
+	in >> input >> output;
 
 	string file = readFile(input);
+	cout << *(file.rbegin()) << endl;
 	vector<Token> tokens = makeTokens(file);
 
 	for(auto i: tokens){
-		cout << i.type << ' ';
+		cout << i.type << ' ' << i.value << endl;
 	}
 	cout << endl;
 

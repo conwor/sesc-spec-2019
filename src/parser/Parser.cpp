@@ -2,7 +2,7 @@
 // Created by salah on 29.10.2019.
 //
 
-#include "base.h"
+#include "../base.h"
 #include "Parser.h"
 #include <iostream>
 #include <stack>
@@ -22,10 +22,16 @@ bool nextToken(TokenType tokenType, int ttType, stack<Token>& stack) {
 }
 
 bool nextToken(TokenType tokenType, int ttType, vector<Token>& tokens) {
+	if(tokens.empty()){
+		return false;
+	}
     return isSameToken(tokenType, ttType, tokens.at(0));
 }
 
 bool nextToken(TokenType tokenType, vector<Token>& tokens) {
+	if(tokens.empty()){
+		return false;
+	}
     return isSameToken(tokenType, tokens.at(0));
 }
 
@@ -96,6 +102,8 @@ int getPriority(Token token) {
         case MUL:
         case DIV:
             return 3;
+        default:
+        	return 0;
     }
 }
 
@@ -248,11 +256,12 @@ vector<Operator*> parseBody(vector<Token>& tokens) {
 
     skipToken(TT_OPERATION, OPEN_BRACE, tokens);
 
-    while (nextToken(TT_OPERATION, CLOSE_BRACE, tokens)) {
+    while (!nextToken(TT_OPERATION, CLOSE_BRACE, tokens)) {
         body.push_back(parseOperator(tokens));
     }
 
     skipToken(TT_OPERATION, CLOSE_BRACE, tokens);
+    return body;
 }
 
 Function* parseFunction(vector<Token>& tokens) {
